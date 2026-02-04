@@ -204,7 +204,7 @@ export default function InvoiceDetailPage() {
                                 {invoice.notes && (
                                     <div className="p-6 rounded-3xl bg-white/5 border border-white/5 max-w-md">
                                         <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-4">Notes & Remarks</h3>
-                                        <p className="text-muted-foreground leading-relaxed italic">"{invoice.notes}"</p>
+                                        <p className="text-muted-foreground leading-relaxed italic">&quot;{invoice.notes}&quot;</p>
                                     </div>
                                 )}
                                 <div className="p-6 rounded-3xl bg-white/5 border border-white/5 max-w-sm">

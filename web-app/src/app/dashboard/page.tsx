@@ -337,7 +337,7 @@ export default function DashboardPage() {
                             <div>
                                 <h2 className="text-2xl font-bold mb-2">🎉 Welcome to AI Retail System!</h2>
                                 <p className="text-purple-100 mb-4">
-                                    Let's customize your inventory fields to match your business needs
+                                    Let&apos;s customize your inventory fields to match your business needs
                                 </p>
                                 <Link
                                     href="/dashboard/onboarding"

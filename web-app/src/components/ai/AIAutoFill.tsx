@@ -125,7 +125,7 @@ export default function AIAutoFill({ productName, onDataGenerated }: AIAutoFillP
             <div className="mt-6 flex items-center gap-3 text-muted-foreground bg-secondary/50 p-4 rounded-xl border border-border/30">
                 <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                 <p className="text-[10px] font-bold uppercase tracking-widest">
-                    Tip: Enter specific brand/model for better results (e.g., "iPhone 15 Pro")
+                    Tip: Enter specific brand/model for better results (e.g., &quot;iPhone 15 Pro&quot;)
                 </p>
             </div>
         </div>

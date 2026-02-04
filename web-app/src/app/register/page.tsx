@@ -197,7 +197,7 @@ export default function CompanyRegistrationForm() {
                         Welcome to AI Retail System
                     </h1>
                     <p className="text-gray-600">
-                        Let's set up your business account in just a few steps
+                        Let&apos;s set up your business account in just a few steps
                     </p>
                 </div>
 

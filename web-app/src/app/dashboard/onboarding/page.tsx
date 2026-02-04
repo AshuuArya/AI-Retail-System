@@ -12,7 +12,7 @@ export default function OnboardingPage() {
                         🎉 Welcome to Your Inventory Setup!
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400">
-                        Let's customize your inventory fields to match your business needs
+                        Let&apos;s customize your inventory fields to match your business needs
                     </p>
                 </div>
 

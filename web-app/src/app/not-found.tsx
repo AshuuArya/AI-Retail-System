@@ -13,7 +13,7 @@ export default function NotFound() {
                     <div className="text-8xl mb-8 animate-float drop-shadow-[0_0_25px_rgba(147,51,234,0.3)]">🔍</div>
                     <h2 className="text-3xl font-black text-white mb-4 tracking-tight">404 - Lost in Space</h2>
                     <p className="text-gray-400 mb-10 leading-relaxed font-medium">
-                        The page you're searching for seems to have vanished into the digital void.
+                        The page you&apos;re searching for seems to have vanished into the digital void.
                     </p>
                     <Link
                         href="/dashboard"

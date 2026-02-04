@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function AuthPage() {
+function AuthPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { login, user } = useAuth();
@@ -74,8 +74,8 @@ export default function AuthPage() {
                             type="button"
                             onClick={() => setIsLogin(true)}
                             className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${isLogin
-                                    ? 'bg-white text-purple-600 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-white text-purple-600 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
                                 }`}
                         >
                             Sign In
@@ -84,8 +84,8 @@ export default function AuthPage() {
                             type="button"
                             onClick={() => router.push('/register')}
                             className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${!isLogin
-                                    ? 'bg-white text-purple-600 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-white text-purple-600 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
                                 }`}
                         >
                             Sign Up
@@ -159,7 +159,7 @@ export default function AuthPage() {
 
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
-                            Don't have an account?{' '}
+                            Don&apos;ve an account?{' '}
                             <button
                                 onClick={() => router.push('/register')}
                                 className="text-purple-600 hover:underline font-medium"
@@ -171,5 +171,17 @@ export default function AuthPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AuthPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
+                <div className="w-8 h-8 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+            </div>
+        }>
+            <AuthPageContent />
+        </Suspense>
     );
 }
