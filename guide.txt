@@ -1,0 +1,99 @@
+AI-Powered Retail Management System - Setup Guide
+Welcome to your new retail management system! This guide will walk you through setting up the "brain" of the application (the backend) on your own computer. Don't worry if you're not a technical person—these steps are designed to be as simple as possible.
+
+Part 1: Initial Computer Setup (One-Time Only)
+If you've never run a project like this before, you might need a tool called Python.
+
+Check for Python:
+
+On Windows: Open your Start Menu, type cmd, and press Enter. In the black window that appears, type python --version and press Enter.
+
+On Mac: Open the "Terminal" app. Type python3 --version and press Enter.
+
+Install Python (If Needed):
+
+If you see a version number (like Python 3.9.7), you're all set!
+
+If you get an error, visit the official Python website: https://www.python.org/downloads/.
+
+Download the latest version.
+
+IMPORTANT (for Windows users): During installation, make sure to check the box that says "Add Python to PATH". This is crucial.
+
+Part 2: Setting Up Your Project
+Now, let's create the project folders and files.
+
+Create the Main Folder:
+
+Create a new folder on your computer where you want to keep the project. Name it ai-retail-system.
+
+Create the Backend Folder:
+
+Inside the ai-retail-system folder, create another folder named backend.
+
+Create and Fill the Project Files:
+
+Inside the backend folder, create the five files listed below. Copy the exact contents for each file and paste them into your newly created files.
+
+database.py
+
+main.py
+
+requirements.txt
+
+run_backend.sh
+
+run_backend.bat
+
+Part 3: Installing the "Tools" (Dependencies)
+Your project needs a few extra tools to work correctly. This is a one-time setup for the project.
+
+Open a Terminal/Command Prompt in Your Project Folder:
+
+Easy Way (Windows): Open your backend folder, click the file path at the top, type cmd, and press Enter. A black command window will open in the correct location.
+
+Easy Way (Mac): Open the "Terminal" app. Type cd  (with a space), then drag your backend folder from Finder directly onto the Terminal window and press Enter.
+
+Create a Private "Workspace" (Virtual Environment):
+
+In the terminal window you just opened, copy and paste the correct command for your system and press Enter. This creates a private toolkit just for this project.
+
+On Windows: python -m venv venv
+
+On Mac/Linux: python3 -m venv venv
+
+Activate the Workspace:
+
+Now, you need to "turn on" this private workspace.
+
+On Windows: .\venv\Scripts\activate
+
+On Mac/Linux: source venv/bin/activate
+
+You'll know it worked because you'll see (venv) at the beginning of your command line prompt.
+
+Install the Tools:
+
+With (venv) active, copy and paste this final command to install all the necessary tools at once:
+
+pip install -r requirements.txt
+
+Part 4: Running Your Retail System!
+This is the easy part! From now on, whenever you want to start your server, just follow these steps.
+
+Navigate to your backend folder.
+
+Simply double-click the correct file for your system:
+
+On Windows: Double-click run_backend.bat
+
+On Mac/Linux: Double-click run_backend.sh (You may need to give it permission first. Right-click -> Get Info -> Sharing & Permissions -> and give yourself "Read & Write" access).
+
+A terminal window will open, and you'll see some text. If everything is working, the last line will say something like Application startup complete.
+
+Your server is now running!
+
+To check that it's working and to play with the API, open your web browser and go to:
+http://127.0.0.1:8000/docs
+
+You will see a beautiful, interactive documentation page where you can test all the features of your new system's brain.
