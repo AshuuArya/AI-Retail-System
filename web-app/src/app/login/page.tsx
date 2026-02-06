@@ -4,17 +4,37 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { BusinessType } from '@/core/entities/Seller';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    LayoutDashboard,
+    UserPlus,
+    LogIn,
+    Store,
+    Mail,
+    Lock,
+    Phone,
+    MapPin,
+    CreditCard,
+    UserCircle,
+    Building2,
+    ArrowRight
+} from 'lucide-react';
 
 /**
- * BRAND NEW AUTH PAGE
- * Tab-based Sign In / Sign Up in one page
+ * PREMIUM AUTH PAGE
+ * Obsidian-styled Tabbed Sign In / Sign Up
  */
 
 function AuthContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { login, user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+    const [activeTab, setActiveTab] = useState<'signin' | 'signup'>(
+        searchParams.get('tab') === 'signup' ? 'signup' : 'signin'
+    );
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -46,15 +66,8 @@ function AuthContent() {
     useEffect(() => {
         if (user) {
             router.push('/dashboard');
-            return;
         }
-
-        if (searchParams.get('registered') === 'true') {
-            setShowSuccess(true);
-            setActiveTab('signin');
-            setTimeout(() => setShowSuccess(false), 5000);
-        }
-    }, [searchParams, user, router]);
+    }, [user, router]);
 
     const handleSignInChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -129,22 +142,6 @@ function AuthContent() {
 
             setShowSuccess(true);
             setActiveTab('signin');
-            // Clear form
-            setSignUpData({
-                companyName: '',
-                ownerName: '',
-                email: '',
-                phone: '',
-                gstNumber: '',
-                businessType: BusinessType.GENERAL_STORE,
-                street: '',
-                city: '',
-                state: '',
-                pincode: '',
-                country: 'India',
-                password: '',
-                confirmPassword: '',
-            });
         } catch (error: any) {
             setErrors({ submit: error.message });
         } finally {
@@ -153,283 +150,291 @@ function AuthContent() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#0a0e1a' }}>
-            <div style={{ maxWidth: '500px', width: '100%' }}>
-                {/* Logo */}
-                <div className="text-center mb-6">
-                    <div className="text-4xl mb-2">🛍️</div>
-                    <h1 className="text-3xl font-bold" style={{ color: '#6366f1' }}>
-                        AI Retail System
-                    </h1>
-                    <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>
-                        Smart inventory management for retailers
-                    </p>
-                </div>
+        <div className="min-h-screen bg-[#0a0b10] flex flex-col items-center justify-center p-6 selection:bg-blue-500/30">
+            {/* Background Decorative Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full" />
+            </div>
 
-                {/* Success Message */}
-                {showSuccess && (
-                    <div className="success">
-                        ✓ Registration successful! Please sign in to continue.
+            <main className="w-full max-w-[550px] relative z-10 space-y-10">
+                {/* Brand Logo & Title */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center space-y-4"
+                >
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 shadow-2xl shadow-blue-600/20 mb-2">
+                        <Store size={40} className="text-white" />
                     </div>
-                )}
+                    <div className="space-y-1">
+                        <h1 className="text-4xl font-black tracking-tight text-white">
+                            AI Retail <span className="text-blue-500 underline decoration-blue-500/30 underline-offset-8">System</span>
+                        </h1>
+                        <p className="text-slate-500 text-sm font-medium tracking-wide">
+                            The future of smart inventory management
+                        </p>
+                    </div>
+                </motion.div>
 
-                {/* Auth Card */}
-                <div className="card">
-                    {/* Tabs */}
-                    <div className="tabs">
+                {/* Auth Container */}
+                <Card className="border-white/5 shadow-3xl bg-white/[0.01]" padding="p-0 overflow-hidden">
+                    {/* Tabs Header */}
+                    <div className="flex border-b border-white/5 p-2 bg-white/[0.02]">
                         <button
-                            className={`tab ${activeTab === 'signin' ? 'active' : ''}`}
-                            onClick={() => {
-                                setActiveTab('signin');
-                                setErrors({});
-                            }}
+                            onClick={() => setActiveTab('signin')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-500 ${activeTab === 'signin'
+                                    ? 'bg-white/5 text-white shadow-xl border border-white/10'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                }`}
                         >
+                            <LogIn size={16} />
                             Sign In
                         </button>
                         <button
-                            className={`tab ${activeTab === 'signup' ? 'active' : ''}`}
-                            onClick={() => {
-                                setActiveTab('signup');
-                                setErrors({});
-                            }}
+                            onClick={() => setActiveTab('signup')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-500 ${activeTab === 'signup'
+                                    ? 'bg-white/5 text-white shadow-xl border border-white/10'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                }`}
                         >
-                            Sign Up
+                            <UserPlus size={16} />
+                            Create Account
                         </button>
                     </div>
 
-                    {/* Sign In Form */}
-                    {activeTab === 'signin' && (
-                        <form onSubmit={handleSignIn}>
-                            <div className="input-group">
-                                <label className="label">Email</label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={signInData.email}
-                                    onChange={handleSignInChange}
-                                    className="input"
-                                    placeholder="your@email.com"
-                                    required
-                                />
-                                {errors.email && <div className="error">{errors.email}</div>}
-                            </div>
+                    <div className="p-10">
+                        <AnimatePresence mode="wait">
+                            {showSuccess && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 text-sm font-medium mb-8 flex items-center gap-3"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">✓</div>
+                                    Welcome! Account created successfully. Please sign in.
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-                            <div className="input-group">
-                                <label className="label">Password</label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={signInData.password}
-                                    onChange={handleSignInChange}
-                                    className="input"
-                                    placeholder="Enter password"
-                                    required
-                                />
-                                {errors.password && <div className="error">{errors.password}</div>}
-                            </div>
-
-                            {errors.submit && <div className="error mb-4">{errors.submit}</div>}
-
-                            <button type="submit" className="btn btn-success btn-full" disabled={loading}>
-                                {loading ? 'Signing in...' : '🔓 Sign In'}
-                            </button>
-                        </form>
-                    )}
-
-                    {/* Sign Up Form */}
-                    {activeTab === 'signup' && (
-                        <form onSubmit={handleSignUp}>
-                            <div className="input-group">
-                                <label className="label">Company Name *</label>
-                                <input
-                                    type="text"
-                                    name="companyName"
-                                    value={signUpData.companyName}
-                                    onChange={handleSignUpChange}
-                                    className="input"
-                                    placeholder="Your Store Name"
-                                />
-                                {errors.companyName && <div className="error">{errors.companyName}</div>}
-                            </div>
-
-                            <div className="input-group">
-                                <label className="label">Owner Name *</label>
-                                <input
-                                    type="text"
-                                    name="ownerName"
-                                    value={signUpData.ownerName}
-                                    onChange={handleSignUpChange}
-                                    className="input"
-                                    placeholder="Your Name"
-                                />
-                                {errors.ownerName && <div className="error">{errors.ownerName}</div>}
-                            </div>
-
-                            <div className="grid grid-2">
-                                <div className="input-group">
-                                    <label className="label">Email *</label>
-                                    <input
+                        {/* Forms */}
+                        <AnimatePresence mode="wait">
+                            {activeTab === 'signin' ? (
+                                <motion.form
+                                    key="signin"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    onSubmit={handleSignIn}
+                                    className="space-y-6"
+                                >
+                                    <Input
+                                        label="Corporate Email"
                                         type="email"
                                         name="email"
-                                        value={signUpData.email}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="your@email.com"
+                                        placeholder="name@company.com"
+                                        value={signInData.email}
+                                        onChange={handleSignInChange}
+                                        icon={<Mail size={18} />}
+                                        error={errors.email}
+                                        required
                                     />
-                                    {errors.email && <div className="error">{errors.email}</div>}
-                                </div>
-
-                                <div className="input-group">
-                                    <label className="label">Phone *</label>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        value={signUpData.phone}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="9876543210"
-                                        maxLength={10}
-                                    />
-                                    {errors.phone && <div className="error">{errors.phone}</div>}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-2">
-                                <div className="input-group">
-                                    <label className="label">GST Number *</label>
-                                    <input
-                                        type="text"
-                                        name="gstNumber"
-                                        value={signUpData.gstNumber}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="22AAAAA0000A1Z5"
-                                    />
-                                    {errors.gstNumber && <div className="error">{errors.gstNumber}</div>}
-                                </div>
-
-                                <div className="input-group">
-                                    <label className="label">Business Type</label>
-                                    <select
-                                        name="businessType"
-                                        value={signUpData.businessType}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                    >
-                                        {Object.values(BusinessType).map((type) => (
-                                            <option key={type} value={type}>
-                                                {type.replace(/_/g, ' ')}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="input-group">
-                                <label className="label">Street Address *</label>
-                                <input
-                                    type="text"
-                                    name="street"
-                                    value={signUpData.street}
-                                    onChange={handleSignUpChange}
-                                    className="input"
-                                    placeholder="123 Main Street"
-                                />
-                                {errors.street && <div className="error">{errors.street}</div>}
-                            </div>
-
-                            <div className="grid grid-2">
-                                <div className="input-group">
-                                    <label className="label">City *</label>
-                                    <input
-                                        type="text"
-                                        name="city"
-                                        value={signUpData.city}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="Mumbai"
-                                    />
-                                    {errors.city && <div className="error">{errors.city}</div>}
-                                </div>
-
-                                <div className="input-group">
-                                    <label className="label">State *</label>
-                                    <input
-                                        type="text"
-                                        name="state"
-                                        value={signUpData.state}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="Maharashtra"
-                                    />
-                                    {errors.state && <div className="error">{errors.state}</div>}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-2">
-                                <div className="input-group">
-                                    <label className="label">Pincode *</label>
-                                    <input
-                                        type="text"
-                                        name="pincode"
-                                        value={signUpData.pincode}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="400001"
-                                        maxLength={6}
-                                    />
-                                    {errors.pincode && <div className="error">{errors.pincode}</div>}
-                                </div>
-
-                                <div className="input-group">
-                                    <label className="label">Country</label>
-                                    <input
-                                        type="text"
-                                        name="country"
-                                        value={signUpData.country}
-                                        className="input"
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-2">
-                                <div className="input-group">
-                                    <label className="label">Password *</label>
-                                    <input
+                                    <Input
+                                        label="Secure Password"
                                         type="password"
                                         name="password"
-                                        value={signUpData.password}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="Min 8 characters"
+                                        placeholder="••••••••"
+                                        value={signInData.password}
+                                        onChange={handleSignInChange}
+                                        icon={<Lock size={18} />}
+                                        error={errors.password}
+                                        required
                                     />
-                                    {errors.password && <div className="error">{errors.password}</div>}
-                                </div>
 
-                                <div className="input-group">
-                                    <label className="label">Confirm Password *</label>
-                                    <input
-                                        type="password"
-                                        name="confirmPassword"
-                                        value={signUpData.confirmPassword}
-                                        onChange={handleSignUpChange}
-                                        className="input"
-                                        placeholder="Re-enter password"
-                                    />
-                                    {errors.confirmPassword && <div className="error">{errors.confirmPassword}</div>}
-                                </div>
-                            </div>
+                                    {errors.submit && (
+                                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-medium">
+                                            {errors.submit}
+                                        </div>
+                                    )}
 
-                            {errors.submit && <div className="error mb-4">{errors.submit}</div>}
+                                    <Button
+                                        type="submit"
+                                        className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-sm shadow-xl shadow-blue-600/20 group"
+                                        isLoading={loading}
+                                    >
+                                        Access Dashboard
+                                        <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </motion.form>
+                            ) : (
+                                <motion.form
+                                    key="signup"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    onSubmit={handleSignUp}
+                                    className="space-y-8"
+                                >
+                                    {/* Company Info Section */}
+                                    <section className="space-y-6">
+                                        <div className="flex items-center gap-3 ml-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Business Identity</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="md:col-span-2">
+                                                <Input
+                                                    label="Legal Business Name"
+                                                    name="companyName"
+                                                    placeholder="Acme Retail Ltd."
+                                                    value={signUpData.companyName}
+                                                    onChange={handleSignUpChange}
+                                                    icon={<Building2 size={18} />}
+                                                    error={errors.companyName}
+                                                />
+                                            </div>
+                                            <Input
+                                                label="Proprietor Name"
+                                                name="ownerName"
+                                                placeholder="John Doe"
+                                                value={signUpData.ownerName}
+                                                onChange={handleSignUpChange}
+                                                icon={<UserCircle size={18} />}
+                                                error={errors.ownerName}
+                                            />
+                                            <Input
+                                                label="GST Identification No."
+                                                name="gstNumber"
+                                                placeholder="22AAAAA0000A1Z5"
+                                                value={signUpData.gstNumber}
+                                                onChange={handleSignUpChange}
+                                                icon={<CreditCard size={18} />}
+                                                error={errors.gstNumber}
+                                            />
+                                        </div>
+                                    </section>
 
-                            <button type="submit" className="btn btn-purple btn-full" disabled={loading}>
-                                {loading ? 'Creating Account...' : '👤 Create Account'}
-                            </button>
-                        </form>
-                    )}
+                                    {/* Contact Section */}
+                                    <section className="space-y-6 pt-4 border-t border-white/5">
+                                        <div className="flex items-center gap-3 ml-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Contact & Security</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <Input
+                                                label="Email Address"
+                                                type="email"
+                                                name="email"
+                                                placeholder="john@example.com"
+                                                value={signUpData.email}
+                                                onChange={handleSignUpChange}
+                                                icon={<Mail size={18} />}
+                                                error={errors.email}
+                                            />
+                                            <Input
+                                                label="Contact Hotline"
+                                                type="tel"
+                                                name="phone"
+                                                placeholder="9876543210"
+                                                value={signUpData.phone}
+                                                onChange={handleSignUpChange}
+                                                icon={<Phone size={18} />}
+                                                error={errors.phone}
+                                            />
+                                            <Input
+                                                label="Create Password"
+                                                type="password"
+                                                name="password"
+                                                placeholder="••••••••"
+                                                value={signUpData.password}
+                                                onChange={handleSignUpChange}
+                                                icon={<Lock size={18} />}
+                                                error={errors.password}
+                                            />
+                                            <Input
+                                                label="Confirm Password"
+                                                type="password"
+                                                name="confirmPassword"
+                                                placeholder="••••••••"
+                                                value={signUpData.confirmPassword}
+                                                onChange={handleSignUpChange}
+                                                icon={<Lock size={18} />}
+                                                error={errors.confirmPassword}
+                                            />
+                                        </div>
+                                    </section>
+
+                                    {/* Location Section */}
+                                    <section className="space-y-6 pt-4 border-t border-white/5">
+                                        <div className="flex items-center gap-3 ml-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Store Location</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="md:col-span-3">
+                                                <Input
+                                                    label="Warehouse/Store Address"
+                                                    name="street"
+                                                    placeholder="Unit 12, High Street"
+                                                    value={signUpData.street}
+                                                    onChange={handleSignUpChange}
+                                                    icon={<MapPin size={18} />}
+                                                    error={errors.street}
+                                                />
+                                            </div>
+                                            <Input
+                                                label="City"
+                                                name="city"
+                                                placeholder="Mumbai"
+                                                value={signUpData.city}
+                                                onChange={handleSignUpChange}
+                                                error={errors.city}
+                                            />
+                                            <Input
+                                                label="State"
+                                                name="state"
+                                                placeholder="Maharashtra"
+                                                value={signUpData.state}
+                                                onChange={handleSignUpChange}
+                                                error={errors.state}
+                                            />
+                                            <Input
+                                                label="Pincode"
+                                                name="pincode"
+                                                placeholder="400001"
+                                                value={signUpData.pincode}
+                                                onChange={handleSignUpChange}
+                                                error={errors.pincode}
+                                            />
+                                        </div>
+                                    </section>
+
+                                    {errors.submit && (
+                                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-medium">
+                                            {errors.submit}
+                                        </div>
+                                    )}
+
+                                    <Button
+                                        type="submit"
+                                        className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-sm shadow-xl shadow-indigo-600/20 group"
+                                        isLoading={loading}
+                                    >
+                                        Register Business
+                                        <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </motion.form>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </Card>
+
+                {/* Footer Links */}
+                <div className="text-center text-slate-600 text-[10px] font-bold uppercase tracking-widest pb-10">
+                    &copy; 2026 AI Retail Management &middot; Secured by Appwrite Cloud
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
@@ -437,8 +442,8 @@ function AuthContent() {
 export default function AuthPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0e1a' }}>
-                <div style={{ color: 'white' }}>Loading...</div>
+            <div className="min-h-screen bg-[#0a0b10] flex items-center justify-center font-black uppercase tracking-[0.2em] text-slate-700">
+                Initializing Portal...
             </div>
         }>
             <AuthContent />

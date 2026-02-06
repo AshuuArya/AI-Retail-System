@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+    --color-background-obsidian: #0a0b10;
+    --color-surface-obsidian: rgba(255, 255, 255, 0.03);
+    --color-border-obsidian: rgba(255, 255, 255, 0.1);
+    --color-primary-obsidian: #3b82f6;
+    --color-accent-obsidian: #8b5cf6;
+}
+
 :root {
     --background: #0a0b10;
     --foreground: #f8fafc;
@@ -9,49 +17,111 @@
     --border: rgba(255, 255, 255, 0.1);
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+@layer base {
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background-color: var(--background);
+        color: var(--foreground);
+        min-height: 100vh;
+        overflow-x: hidden;
+        line-height: 1.5;
+    }
 }
 
-body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--background);
-    color: var(--foreground);
-    min-height: 100vh;
-    overflow-x: hidden;
-    line-height: 1.5;
-}
+@layer components {
 
-.premium-gradient-text {
-    color: #fff;
-}
+    /* Legacy Class Restoration with Premium Styling */
+    .card {
+        @apply bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl;
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    }
 
-.glass-surface {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-}
+    .input-group {
+        @apply space-y-2 mb-4;
+    }
 
-.glass-surface-strong {
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
+    .label {
+        @apply block text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1;
+    }
 
-.obsidian-card {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.2s ease;
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border);
-}
+    .input {
+        @apply w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-200 text-sm outline-none transition-all duration-300;
+    }
 
-.obsidian-card:hover {
-    border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.04);
+    .input:focus {
+        @apply border-blue-500/50 ring-4 ring-blue-500/10 bg-white/[0.07];
+    }
+
+    .btn {
+        @apply inline-flex items-center justify-center px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .btn-full {
+        @apply w-full;
+    }
+
+    .btn-primary {
+        @apply bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20;
+    }
+
+    .btn-purple {
+        @apply bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20;
+    }
+
+    .btn-success {
+        @apply bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-600/20;
+    }
+
+    .tabs {
+        @apply flex gap-2 mb-8 bg-white/5 p-1.5 rounded-2xl border border-white/5;
+    }
+
+    .tab {
+        @apply flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 text-slate-500;
+    }
+
+    .tab.active {
+        @apply bg-white/10 text-white shadow-lg border border-white/10;
+    }
+
+    .grid {
+        @apply grid gap-4;
+    }
+
+    .grid-2 {
+        @apply grid-cols-1 md:grid-cols-2;
+    }
+
+    .error {
+        @apply text-[10px] font-bold text-red-400 mt-1 ml-1 animate-pulse;
+    }
+
+    .success {
+        @apply p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 text-xs font-bold mb-6 flex items-center gap-2;
+    }
+
+    /* Premium Utilities */
+    .premium-gradient-text {
+        @apply bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent;
+    }
+
+    .glass-surface {
+        @apply bg-white/[0.03] backdrop-blur-xl border border-white/10;
+    }
+
+    .obsidian-card {
+        @apply relative overflow-hidden transition-all duration-300 border border-white/10 bg-white/[0.02] rounded-[2rem];
+    }
+
+    .obsidian-card:hover {
+        @apply border-blue-500/30 bg-white/[0.04];
+    }
 }
 
 /* Custom Scrollbar */
