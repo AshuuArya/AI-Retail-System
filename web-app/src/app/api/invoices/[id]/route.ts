@@ -6,15 +6,16 @@ import { ManageInvoicesUseCase } from '@/core/use-cases/ManageInvoicesUseCase';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const invoiceRepo = new AppwriteInvoiceRepository();
         const productRepo = new AppwriteProductRepository();
         const customerRepo = new AppwriteCustomerRepository();
         const useCase = new ManageInvoicesUseCase(invoiceRepo, productRepo, customerRepo);
 
-        const invoice = await useCase.getInvoiceById(params.id);
+        const invoice = await useCase.getInvoiceById(id);
 
         if (!invoice) {
             return NextResponse.json(
@@ -35,9 +36,10 @@ export async function GET(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const body = await request.json();
         const { status } = body;
 
@@ -49,7 +51,7 @@ export async function PUT(
         }
 
         const invoiceRepo = new AppwriteInvoiceRepository();
-        const invoice = await invoiceRepo.updateStatus(params.id, status);
+        const invoice = await invoiceRepo.updateStatus(id, status);
 
         return NextResponse.json({ invoice });
     } catch (error: any) {

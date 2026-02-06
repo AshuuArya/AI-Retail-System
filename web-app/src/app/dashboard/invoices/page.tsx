@@ -4,16 +4,35 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from '@/hooks/useOptimization';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/Input';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Receipt,
+    Plus,
+    Search,
+    Filter,
+    Calendar,
+    CreditCard,
+    ArrowUpRight,
+    TrendingUp,
+    CheckCircle2,
+    Clock,
+    XCircle,
+    Eye
+} from 'lucide-react';
 
 interface Invoice {
-    $id: string;
+    id: string;
     invoiceNumber: string;
     customerId: string;
     customerName: string;
     total: number;
     status: 'paid' | 'pending' | 'cancelled';
     paymentMethod: string;
-    $createdAt: string;
+    createdAt: string;
 }
 
 export default function InvoicesPage() {
@@ -26,244 +45,172 @@ export default function InvoicesPage() {
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
     useEffect(() => {
-        if (user) {
-            fetchInvoices();
-        }
-    }, [user]);
-
-    useEffect(() => {
-        if (user) {
-            fetchInvoices();
-        }
-    }, [debouncedSearchTerm, statusFilter]);
+        if (user?.$id) fetchInvoices();
+    }, [user, debouncedSearchTerm, statusFilter]);
 
     const fetchInvoices = async () => {
         try {
             setLoading(true);
-            const params = new URLSearchParams({
-                sellerId: user?.$id || ''
-            });
-
-            if (debouncedSearchTerm) {
-                params.append('search', debouncedSearchTerm);
-            }
-
-            if (statusFilter !== 'all') {
-                params.append('status', statusFilter);
-            }
+            const params = new URLSearchParams({ sellerId: user?.$id || '' });
+            if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
+            if (statusFilter !== 'all') params.append('status', statusFilter);
 
             const response = await fetch(`/api/invoices?${params}`);
             const data = await response.json();
-
-            if (response.ok) {
-                setInvoices(data.invoices || []);
-            }
+            if (response.ok) setInvoices(data.invoices || []);
         } catch (error) {
-            console.error('Error fetching invoices:', error);
+            console.error('Fetch error:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
+    const totalRevenue = invoices.filter(i => i.status === 'paid').reduce((sum, inv) => sum + inv.total, 0);
+    const totalCount = invoices.length;
     const paidInvoices = invoices.filter(inv => inv.status === 'paid').length;
     const pendingInvoices = invoices.filter(inv => inv.status === 'pending').length;
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'paid': return 'bg-green-100 text-green-700';
-            case 'pending': return 'bg-yellow-100 text-yellow-700';
-            case 'cancelled': return 'bg-red-100 text-red-700';
-            default: return 'bg-gray-100 text-gray-700';
-        }
-    };
-
     return (
-        <div className="p-6">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-10">
-                    <h1 className="text-4xl font-extrabold text-foreground tracking-tight sm:text-5xl">
-                        Financial <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-500">Ledger</span> 📄
+        <div className="max-w-7xl mx-auto px-6 py-10 sm:px-10 lg:px-12 space-y-12">
+            {/* Header */}
+            <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8"
+            >
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <Receipt size={16} className="text-blue-500" />
+                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Financial Management</span>
+                    </div>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">
+                        Invoices & Billing
                     </h1>
-                    <p className="text-xl text-muted-foreground mt-4 max-w-2xl font-medium">
-                        Comprehensive transaction monitoring and fiscal reporting protocols.
+                    <p className="text-sm text-slate-400">
+                        Track and manage your <span className="text-white font-semibold">store revenue</span> and billing transactions.
                     </p>
                 </div>
+                <Link href="/dashboard/invoices/create">
+                    <Button className="h-10 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 border-0 shadow-lg shadow-blue-600/20">
+                        <Plus size={18} className="mr-2" />
+                        Create Invoice
+                    </Button>
+                </Link>
+            </motion.div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                    <div className="glass-card card-hover rounded-2xl p-6 border-l-4 border-l-primary/30">
-                        <div className="flex items-center justify-between">
+            {/* Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[
+                    { label: 'Total Revenue', value: `₹${(totalRevenue ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'blue' },
+                    { label: 'Total Invoices', value: totalCount, icon: Receipt, color: 'purple' },
+                    { label: 'Paid', value: paidInvoices, icon: CheckCircle2, color: 'emerald' },
+                    { label: 'Pending', value: pendingInvoices, icon: Clock, color: 'orange' },
+                ].map((stat, i) => (
+                    <Card key={i} className="border-white/5" padding="p-6">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-xl bg-${stat.color}-500/10 flex items-center justify-center text-${stat.color}-400`}>
+                                <stat.icon size={20} />
+                            </div>
                             <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Total Volume</p>
-                                <p className="text-3xl font-black text-foreground">{invoices.length}</p>
-                            </div>
-                            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
-                                <span className="text-2xl text-primary">📄</span>
+                                <p className="text-xs font-medium text-slate-500 mb-0.5">{stat.label}</p>
+                                <p className="text-xl font-bold text-white">{stat.value}</p>
                             </div>
                         </div>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Table section */}
+            <Card className="border-white/5 overflow-hidden" padding="p-0">
+                <div className="p-6 border-b border-white/10 bg-white/[0.02] flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="max-w-md w-full">
+                        <Input
+                            placeholder="Search by invoice # or customer..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="h-10 rounded-lg"
+                            icon={<Search size={16} />}
+                        />
                     </div>
-
-                    <div className="glass-card card-hover rounded-2xl p-6 border-l-4 border-l-green-500/30">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Settled</p>
-                                <p className="text-3xl font-black text-green-500">{paidInvoices}</p>
-                            </div>
-                            <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20">
-                                <span className="text-2xl text-green-500">✅</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="glass-card card-hover rounded-2xl p-6 border-l-4 border-l-yellow-500/30">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Awaiting</p>
-                                <p className="text-3xl font-black text-yellow-500">{pendingInvoices}</p>
-                            </div>
-                            <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center border border-yellow-500/20">
-                                <span className="text-2xl text-yellow-500">⏳</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="glass-card card-hover rounded-2xl p-6 border-l-4 border-l-purple-500/30">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Gross Revenue</p>
-                                <p className="text-3xl font-black text-purple-500">₹{totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                            </div>
-                            <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20">
-                                <span className="text-2xl text-purple-500">💰</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Filters & Actions */}
-                <div className="glass-card rounded-2xl p-6 mb-8 border border-white/5">
-                    <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-                        <div className="flex-1 w-full md:w-auto relative">
-                            <input
-                                type="text"
-                                placeholder="Locate transaction hash..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-primary/50 text-foreground transition-all placeholder:text-muted-foreground/50"
-                            />
-                            {searchTerm && searchTerm !== debouncedSearchTerm && (
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                                </div>
-                            )}
-                        </div>
-
+                    <div className="flex items-center gap-3">
+                        <label className="text-xs font-semibold text-slate-500">Filter Status:</label>
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="h-12 px-4 bg-white/5 border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/50 text-foreground text-xs font-bold uppercase tracking-widest"
+                            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-semibold text-slate-300 outline-none h-10"
                         >
-                            <option value="all" className="bg-card">All Vectors</option>
-                            <option value="paid" className="bg-card">SETTLED</option>
-                            <option value="pending" className="bg-card">PENDING</option>
-                            <option value="cancelled" className="bg-card">REVOKED</option>
+                            <option value="all">All Invoices</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
-
-                        <Link
-                            href="/dashboard/invoices/create"
-                            className="h-12 px-8 premium-gradient text-white font-bold rounded-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-widest text-xs shadow-lg shadow-purple-500/20"
-                        >
-                            <span>+</span>
-                            <span>Generate Invoice</span>
-                        </Link>
                     </div>
                 </div>
 
-                {/* Invoices List */}
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-                        <p className="mt-4 text-gray-600">Loading invoices...</p>
-                    </div>
-                ) : invoices.length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-12 text-center">
-                        <div className="text-6xl mb-4">📄</div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No invoices yet</h3>
-                        <p className="text-gray-600 mb-6">Create your first invoice to start tracking sales</p>
-                        <Link
-                            href="/dashboard/invoices/create"
-                            className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            Create Your First Invoice
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="glass-card rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-white/5">
-                                <thead className="bg-white/5">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                            <tr>
+                                <th className="px-8 py-5">Invoice Details</th>
+                                <th className="px-8 py-5">Customer</th>
+                                <th className="px-8 py-5 text-right">Total</th>
+                                <th className="px-8 py-5 text-center">Status</th>
+                                <th className="px-8 py-5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            <AnimatePresence mode="popLayout">
+                                {loading && invoices.length === 0 ? (
                                     <tr>
-                                        <th className="px-8 py-5 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Vector ID
-                                        </th>
-                                        <th className="px-8 py-5 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Target Identity
-                                        </th>
-                                        <th className="px-8 py-5 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Timestamp
-                                        </th>
-                                        <th className="px-8 py-5 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Financial Sum
-                                        </th>
-                                        <th className="px-8 py-5 text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Status
-                                        </th>
-                                        <th className="px-8 py-5 text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Actions
-                                        </th>
+                                        <td colSpan={5} className="px-8 py-20 text-center">
+                                            <div className="inline-block w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                                            <p className="mt-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Loading Invoices...</p>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5">
-                                    {invoices.map((invoice) => (
-                                        <tr key={invoice.$id} className="hover:bg-white/[0.02] group transition-colors">
-                                            <td className="px-8 py-6 whitespace-nowrap">
-                                                <div className="text-sm font-black text-foreground group-hover:text-primary transition-colors tracking-tighter">{invoice.invoiceNumber}</div>
-                                            </td>
-                                            <td className="px-8 py-6 whitespace-nowrap">
-                                                <div className="text-sm font-bold text-foreground">{invoice.customerName || 'ANONYMOUS_ENTITY'}</div>
-                                            </td>
-                                            <td className="px-8 py-6 whitespace-nowrap">
-                                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                                    {new Date(invoice.$createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                                ) : (
+                                    invoices.map((invoice, idx) => (
+                                        <motion.tr
+                                            key={invoice.id}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: idx * 0.03 }}
+                                            className="hover:bg-white/[0.02] transition-colors group/row"
+                                        >
+                                            <td className="px-8 py-5">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-blue-400">{invoice.invoiceNumber}</span>
+                                                    <span className="text-[10px] text-slate-500">{new Date(invoice.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-6 whitespace-nowrap">
-                                                <div className="text-sm font-black text-foreground">₹{invoice.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                            <td className="px-8 py-5">
+                                                <span className="text-xs font-semibold text-slate-300">{invoice.customerName}</span>
                                             </td>
-                                            <td className="px-8 py-6 whitespace-nowrap">
-                                                <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-widest border ${invoice.status === 'paid' ? 'bg-green-500/10 text-green-500 border-green-500/20' : invoice.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
-                                                    {invoice.status}
-                                                </span>
+                                            <td className="px-8 py-5 text-right">
+                                                <span className="text-xs font-bold text-white">₹{(invoice.total ?? 0).toLocaleString()}</span>
                                             </td>
-                                            <td className="px-8 py-6 whitespace-nowrap text-right">
-                                                <Link
-                                                    href={`/dashboard/invoices/${invoice.$id}`}
-                                                    className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-border/50 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all active:scale-95"
-                                                    title="Inspect Transaction"
+                                            <td className="px-8 py-5 text-center">
+                                                <Badge
+                                                    variant={invoice.status === 'paid' ? 'success' : invoice.status === 'pending' ? 'warning' : 'danger'}
+                                                    className="px-3 py-1 text-[10px] font-bold"
                                                 >
-                                                    👁️
+                                                    {invoice.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-8 py-5 text-right">
+                                                <Link href={`/dashboard/invoices/${invoice.id}`}>
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-white/5">
+                                                        <Eye size={14} className="text-slate-400" />
+                                                    </Button>
                                                 </Link>
                                             </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
-            </div>
+                                        </motion.tr>
+                                    ))
+                                )}
+                            </AnimatePresence>
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
         </div>
     );
 }

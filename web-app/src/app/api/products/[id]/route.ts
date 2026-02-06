@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databases } from '@/infrastructure/appwrite/server-client';
-import { Query } from 'node-appwrite';
+import { AppwriteProductRepository } from '@/infrastructure/appwrite/AppwriteProductRepository';
+import { GetProductsUseCase } from '@/core/use-cases/GetProductsUseCase';
+import { UpdateProductDTO } from '@/core/entities/Product';
 
-const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const PRODUCTS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!;
+// Initialize dependencies
+const productRepository = new AppwriteProductRepository();
+const getProductsUseCase = new GetProductsUseCase(productRepository);
 
 // GET single product
 export async function GET(
@@ -11,27 +13,22 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: productId } = await params;
+        const { id } = await params;
+        const product = await productRepository.findById(id);
 
-        if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
-            return Response.json(
-                { error: 'Database configuration missing' },
-                { status: 500 }
+        if (!product) {
+            return NextResponse.json(
+                { error: 'Product not found' },
+                { status: 404 }
             );
         }
-
-        const product = await databases.getDocument(
-            DATABASE_ID,
-            PRODUCTS_COLLECTION_ID,
-            productId
-        );
 
         return NextResponse.json(product);
     } catch (error: any) {
         console.error('Error fetching product:', error);
         return NextResponse.json(
             { error: error.message || 'Failed to fetch product' },
-            { status: error.code || 500 }
+            { status: 500 }
         );
     }
 }
@@ -42,32 +39,18 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: productId } = await params;
-
-        if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
-            return Response.json(
-                { error: 'Database configuration missing' },
-                { status: 500 }
-            );
-        }
+        const { id } = await params;
         const body = await request.json();
 
-        // Remove fields that shouldn't be updated
-        const { $id, $createdAt, $updatedAt, $permissions, $collectionId, $databaseId, ...updateData } = body;
-
-        const updatedProduct = await databases.updateDocument(
-            DATABASE_ID,
-            PRODUCTS_COLLECTION_ID,
-            productId,
-            updateData
-        );
+        // Use repository to update - it handles filtering allowed fields
+        const updatedProduct = await productRepository.update(id, body as UpdateProductDTO);
 
         return NextResponse.json(updatedProduct);
     } catch (error: any) {
         console.error('Error updating product:', error);
         return NextResponse.json(
             { error: error.message || 'Failed to update product' },
-            { status: error.code || 500 }
+            { status: 500 }
         );
     }
 }
@@ -78,27 +61,15 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: productId } = await params;
-
-        if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
-            return Response.json(
-                { error: 'Database configuration missing' },
-                { status: 500 }
-            );
-        }
-
-        await databases.deleteDocument(
-            DATABASE_ID,
-            PRODUCTS_COLLECTION_ID,
-            productId
-        );
+        const { id } = await params;
+        await productRepository.delete(id);
 
         return NextResponse.json({ success: true, message: 'Product deleted successfully' });
     } catch (error: any) {
         console.error('Error deleting product:', error);
         return NextResponse.json(
             { error: error.message || 'Failed to delete product' },
-            { status: error.code || 500 }
+            { status: 500 }
         );
     }
 }

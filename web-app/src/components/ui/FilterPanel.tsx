@@ -1,71 +1,59 @@
-import React from 'react';
+/**
+ * Simple Filter Panel
+ * No fancy UI library - just simple filters
+ */
+
+export interface FilterGroup {
+    id: string;
+    label: string;
+    options: Array<{ value: string; label: string }>;
+    value: string;
+    onChange: (value: string) => void;
+}
 
 interface FilterPanelProps {
-    isOpen: boolean;
-    onClose: () => void;
-    children: React.ReactNode;
-    activeFilterCount?: number;
-    onClearAll?: () => void;
+    filters: FilterGroup[];
+    onReset?: () => void;
 }
 
-export default function FilterPanel({
-    isOpen,
-    onClose,
-    children,
-    activeFilterCount = 0,
-    onClearAll
-}: FilterPanelProps) {
-    if (!isOpen) return null;
-
+export default function FilterPanel({ filters, onReset }: FilterPanelProps) {
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Filters
-                    </h3>
-                    {activeFilterCount > 0 && (
-                        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                            {activeFilterCount} active
-                        </span>
-                    )}
-                </div>
-                <div className="flex items-center gap-2">
-                    {activeFilterCount > 0 && onClearAll && (
-                        <button
-                            onClick={onClearAll}
-                            className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                        >
-                            Clear All
-                        </button>
-                    )}
+        <div className="card" style={{ padding: '1rem' }}>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold">Filters</h3>
+                {onReset && (
                     <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+                        onClick={onReset}
+                        className="text-sm"
+                        style={{ color: '#6366f1', fontWeight: 600 }}
                     >
-                        ✕
+                        Reset
                     </button>
-                </div>
+                )}
             </div>
-            <div className="space-y-4">
-                {children}
+
+            <div className="grid gap-4">
+                {filters.map((filter) => (
+                    <div key={filter.id}>
+                        <label className="label">
+                            {filter.label}
+                        </label>
+                        <select
+                            value={filter.value}
+                            onChange={(e) => filter.onChange(e.target.value)}
+                            className="input"
+                        >
+                            {filter.options.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
             </div>
         </div>
     );
 }
 
-interface FilterGroupProps {
-    label: string;
-    children: React.ReactNode;
-}
-
-export function FilterGroup({ label, children }: FilterGroupProps) {
-    return (
-        <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {label}
-            </label>
-            {children}
-        </div>
-    );
-}
+// export type { FilterGroup }; // Already exported above

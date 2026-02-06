@@ -1,10 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import AIAutoFill from '@/components/ai/AIAutoFill';
-import { useDebouncedCallback } from '@/hooks/useOptimization';
+import { Card } from '@/components/ui/Card';
+import { Input, TextArea } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Info,
+    Zap,
+    Tag,
+    DollarSign,
+    Box,
+    Hash,
+    BarChart,
+    Check,
+    AlertCircle
+} from 'lucide-react';
 
 interface ProductFormData {
     itemName: string;
@@ -25,9 +39,10 @@ interface ProductFormProps {
     initialData?: Partial<ProductFormData>;
     productId?: string;
     onSuccess?: () => void;
+    isEdit?: boolean;
 }
 
-export default function ProductForm({ initialData, productId, onSuccess }: ProductFormProps) {
+export default function ProductForm({ initialData, productId, onSuccess, isEdit }: ProductFormProps) {
     const router = useRouter();
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -59,7 +74,6 @@ export default function ProductForm({ initialData, productId, onSuccess }: Produ
         }));
     };
 
-    // Handle AI auto-fill data
     const handleAIData = (aiData: any) => {
         setFormData(prev => ({
             ...prev,
@@ -75,8 +89,6 @@ export default function ProductForm({ initialData, productId, onSuccess }: Produ
             sku: aiData.sku || prev.sku,
         }));
         setAiGenerated(true);
-
-        // Show success message
         setTimeout(() => setAiGenerated(false), 3000);
     };
 
@@ -86,17 +98,12 @@ export default function ProductForm({ initialData, productId, onSuccess }: Produ
         setError('');
 
         try {
-            const url = productId
-                ? `/api/products/${productId}`
-                : '/api/products';
-
+            const url = productId ? `/api/products/${productId}` : '/api/products';
             const method = productId ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
                 method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
                     itemId: formData.sku || `ITEM-${Date.now()}`,
@@ -107,14 +114,11 @@ export default function ProductForm({ initialData, productId, onSuccess }: Produ
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.message || `Failed to ${productId ? 'update' : 'create'} product`);
+                throw new Error(data.message || 'Failed to save product');
             }
 
-            if (onSuccess) {
-                onSuccess();
-            } else {
-                router.push('/dashboard/inventory');
-            }
+            if (onSuccess) onSuccess();
+            else router.push('/dashboard/inventory');
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -123,277 +127,178 @@ export default function ProductForm({ initialData, productId, onSuccess }: Produ
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-4 rounded-2xl flex items-center gap-3">
-                    <span className="text-xl">⚠️</span>
-                    <p className="font-semibold">{error}</p>
+        <form onSubmit={handleSubmit} className="space-y-8">
+            <AnimatePresence>
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm font-medium"
+                    >
+                        <AlertCircle size={18} />
+                        {error}
+                    </motion.div>
+                )}
+
+                {aiGenerated && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-3 text-blue-400 text-sm font-bold shadow-lg"
+                    >
+                        <Zap size={18} className="animate-pulse" />
+                        ✨ Form filled with AI suggestions. Please review before saving.
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {!isEdit && (
+                <Card className="!p-6 border-blue-500/20 bg-blue-500/[0.02]" hover={false}>
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                            <Zap size={18} />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-300 uppercase tracking-widest">AI Assistant</h4>
+                    </div>
+                    <AIAutoFill
+                        productName={formData.itemName}
+                        onDataGenerated={handleAIData}
+                    />
+                </Card>
+            )}
+
+            {/* Basic Info */}
+            <div className="space-y-6">
+                <div className="flex items-center gap-3 ml-1">
+                    <Info size={16} className="text-slate-500" />
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">General Information</h3>
                 </div>
-            )}
 
-            {aiGenerated && (
-                <div className="bg-primary/10 border border-primary/20 text-primary px-6 py-4 rounded-2xl flex items-center gap-3 animate-float">
-                    <span className="text-2xl">✨</span>
-                    <span className="font-extrabold uppercase tracking-widest text-xs">AI Assistant: Details Updated</span>
-                </div>
-            )}
-
-            {/* AI AUTO-FILL - Manual Trigger Only */}
-            {!productId && (
-                <AIAutoFill
-                    productName={formData.itemName}
-                    onDataGenerated={handleAIData}
-                />
-            )}
-
-            {/* Basic Information */}
-            <div className="glass-card rounded-2xl p-8 border-l-4 border-l-primary shadow-2xl">
-                <h3 className="text-xl font-bold text-foreground mb-8 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-xl">📝</div>
-                    Basic Information
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3">
-                            Product Name *
-                        </label>
-                        <input
-                            type="text"
+                        <Input
+                            label="Product Name *"
                             name="itemName"
                             value={formData.itemName}
                             onChange={handleChange}
                             required
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-primary/50 text-foreground transition-all placeholder:text-muted-foreground/50"
-                            placeholder="e.g., iPhone 15 Pro"
+                            placeholder="e.g., iPhone 15 Pro Max"
+                            icon={<Tag size={16} />}
                         />
                     </div>
-
                     <div className="md:col-span-2">
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3 flex items-center justify-between">
-                            <span>Product Description</span>
-                            {formData.userEditedDescription && <span className="text-[10px] text-primary px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">AI HELPED</span>}
-                        </label>
-                        <textarea
+                        <TextArea
+                            label="Description"
                             name="userEditedDescription"
                             value={formData.userEditedDescription}
                             onChange={handleChange}
-                            rows={4}
-                            className="w-full bg-white/5 border border-border/50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 text-foreground transition-all placeholder:text-muted-foreground/50"
-                            placeholder="Detailed technical specifications..."
+                            placeholder="Describe your product features and details..."
                         />
                     </div>
-
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3 flex items-center justify-between">
-                            <span>Category</span>
-                            {formData.category && <span className="text-[10px] text-primary">SUGGESTED</span>}
-                        </label>
-                        <input
-                            type="text"
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-primary/50 text-foreground"
-                            placeholder="e.g., Electronics"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3">
-                            Manufacturer/Brand
-                        </label>
-                        <input
-                            type="text"
-                            name="brand"
-                            value={formData.brand}
-                            onChange={handleChange}
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-primary/50 text-foreground"
-                            placeholder="e.g., Apple"
-                        />
-                    </div>
+                    <Input
+                        label="Category"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        placeholder="e.g., Electronics"
+                    />
+                    <Input
+                        label="Brand"
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleChange}
+                        placeholder="e.g., Apple"
+                    />
                 </div>
             </div>
 
             {/* Pricing & Stock */}
-            <div className="glass-card rounded-2xl p-8 border-l-4 border-l-green-500 shadow-2xl">
-                <h3 className="text-xl font-bold text-foreground mb-8 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-xl text-green-500">💰</div>
-                    Pricing & Stock
-                </h3>
+            <div className="space-y-6 pt-4">
+                <div className="flex items-center gap-3 ml-1">
+                    <BarChart size={16} className="text-slate-500" />
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pricing & Stock</h3>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Input
+                        label="Selling Price (₹) *"
+                        type="number"
+                        name="sellPrice"
+                        value={formData.sellPrice}
+                        onChange={handleChange}
+                        required
+                        icon={<DollarSign size={16} />}
+                    />
+                    <Input
+                        label="Cost Price (₹)"
+                        type="number"
+                        name="costPrice"
+                        value={formData.costPrice}
+                        onChange={handleChange}
+                        icon={<DollarSign size={16} />}
+                    />
+                    <Input
+                        label="Opening Stock *"
+                        type="number"
+                        name="quantity"
+                        value={formData.quantity}
+                        onChange={handleChange}
+                        required
+                        icon={<Box size={16} />}
+                    />
+                    <Input
+                        label="Low Stock Threshold"
+                        type="number"
+                        name="lowStockThreshold"
+                        value={formData.lowStockThreshold}
+                        onChange={handleChange}
+                    />
                     <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3">
-                            Selling Price (₹) *
-                        </label>
-                        <input
-                            type="number"
-                            name="sellPrice"
-                            value={formData.sellPrice}
-                            onChange={handleChange}
-                            required
-                            min="0"
-                            step="0.01"
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-green-500/50 text-foreground font-bold text-lg"
-                            placeholder="0.00"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3">
-                            Cost Price (₹)
-                        </label>
-                        <input
-                            type="number"
-                            name="costPrice"
-                            value={formData.costPrice}
-                            onChange={handleChange}
-                            min="0"
-                            step="0.01"
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-green-500/50 text-foreground"
-                            placeholder="0.00"
-                        />
-                        {formData.sellPrice > 0 && formData.costPrice > 0 && (
-                            <div className="mt-3 flex items-center gap-2">
-                                <span className="text-[10px] uppercase font-bold text-muted-foreground">Est. Margin</span>
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${(((formData.sellPrice - formData.costPrice) / formData.sellPrice) * 100) > 20 ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'}`}>
-                                    {(((formData.sellPrice - formData.costPrice) / formData.sellPrice) * 100).toFixed(1)}%
-                                </span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3">
-                            Current Stock *
-                        </label>
-                        <input
-                            type="number"
-                            name="quantity"
-                            value={formData.quantity}
-                            onChange={handleChange}
-                            required
-                            min="0"
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-green-500/50 text-foreground"
-                            placeholder="0"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3 flex items-center justify-between">
-                            <span>Low Stock Alert</span>
-                            <span className="text-[10px] text-orange-500">AUTO-MONITORED</span>
-                        </label>
-                        <input
-                            type="number"
-                            name="lowStockThreshold"
-                            value={formData.lowStockThreshold}
-                            onChange={handleChange}
-                            min="0"
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-orange-500/50 text-foreground"
-                            placeholder="10"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3">
-                            Unit
-                        </label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Unit</label>
                         <select
                             name="unit"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-200 focus:border-blue-500/50 outline-none transition-all h-[46px]"
                             value={formData.unit}
                             onChange={handleChange}
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-primary/50 text-foreground appearance-none"
                         >
-                            <option value="piece" className="bg-card">Piece</option>
-                            <option value="kg" className="bg-card">Kilogram</option>
-                            <option value="g" className="bg-card">Gram</option>
-                            <option value="l" className="bg-card">Liter</option>
-                            <option value="ml" className="bg-card">Milliliter</option>
-                            <option value="box" className="bg-card">Box</option>
-                            <option value="pack" className="bg-card">Pack</option>
+                            <option value="piece">Unit / Piece</option>
+                            <option value="kg">Kilogram (KG)</option>
+                            <option value="l">Liter (L)</option>
+                            <option value="pack">Pack</option>
+                            <option value="box">Box</option>
                         </select>
                     </div>
+                    <Input
+                        label="SKU / Item code"
+                        name="sku"
+                        value={formData.sku}
+                        onChange={handleChange}
+                        placeholder="ITEM-001"
+                        icon={<Hash size={16} />}
+                    />
                 </div>
             </div>
 
-            {/* Tracking Hardware */}
-            <div className="glass-card rounded-2xl p-8 border-l-4 border-l-blue-500 shadow-2xl">
-                <h3 className="text-xl font-bold text-foreground mb-8 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-xl text-blue-500">🏷️</div>
-                    Identification
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3">
-                            Barcode (UPC/EAN)
-                        </label>
-                        <input
-                            type="text"
-                            name="barcode"
-                            value={formData.barcode}
-                            onChange={handleChange}
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/50 text-foreground"
-                            placeholder="Scan or input code..."
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-3 flex items-center justify-between">
-                            <span>SKU (Code)</span>
-                            {formData.sku && <span className="text-[10px] text-blue-500">UNIQUE CODE</span>}
-                        </label>
-                        <input
-                            type="text"
-                            name="sku"
-                            value={formData.sku}
-                            onChange={handleChange}
-                            className="w-full h-12 bg-white/5 border border-border/50 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/50 text-foreground"
-                            placeholder="Unique identifier..."
-                        />
-                    </div>
-
-                    {formData.tags && formData.tags.length > 0 && (
-                        <div className="md:col-span-2">
-                            <label className="block text-xs font-extrabold uppercase tracking-widest text-muted-foreground mb-4"> Tags </label>
-                            <div className="flex flex-wrap gap-3">
-                                {formData.tags.map((tag, index) => (
-                                    <span
-                                        key={index}
-                                        className="px-4 py-1.5 bg-white/5 border border-border/50 text-foreground text-[10px] font-extrabold uppercase tracking-widest rounded-xl hover:bg-primary/20 hover:border-primary/30 transition-all cursor-default"
-                                    >
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-6 pt-12">
-                <button
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-4 pt-8 border-t border-white/5">
+                <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => router.back()}
-                    className="h-14 px-10 bg-secondary border border-border/50 text-foreground font-bold rounded-2xl hover:bg-muted transition-all active:scale-95"
-                >
-                    CANCEL
-                </button>
-                <button
-                    type="submit"
                     disabled={loading}
-                    className="h-14 px-12 premium-gradient text-white font-extrabold rounded-2xl shadow-xl shadow-purple-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
+                    className="px-6"
                 >
-                    {loading ? (
-                        <div className="flex items-center gap-3">
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            Processing...
-                        </div>
-                    ) : productId ? 'Save Changes' : 'Add Product'}
-                </button>
+                    Cancel
+                </Button>
+                <Button
+                    type="submit"
+                    className="h-12 px-10 bg-blue-600 hover:bg-blue-500 border-0 shadow-lg shadow-blue-600/20"
+                    isLoading={loading}
+                >
+                    <Check size={18} className="mr-2" />
+                    {isEdit ? 'Save Changes' : 'Add Product'}
+                </Button>
             </div>
         </form>
     );

@@ -7,7 +7,10 @@ import { ICustomerRepository, Customer, CreateCustomerDTO } from '../repositorie
 export class ManageCustomersUseCase {
     constructor(private customerRepository: ICustomerRepository) { }
 
-    async getCustomers(sellerId: string): Promise<Customer[]> {
+    async getCustomers(sellerId: string, search?: string): Promise<Customer[]> {
+        if (search) {
+            return await this.customerRepository.search(search, sellerId);
+        }
         return await this.customerRepository.findAll(sellerId);
     }
 

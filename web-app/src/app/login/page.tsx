@@ -3,50 +3,78 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { BusinessType } from '@/core/entities/Seller';
 
-function AuthPageContent() {
+/**
+ * BRAND NEW AUTH PAGE
+ * Tab-based Sign In / Sign Up in one page
+ */
+
+function AuthContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { login, user } = useAuth();
-    const [isLogin, setIsLogin] = useState(true);
+    const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [formData, setFormData] = useState({
+
+    // Sign In Form
+    const [signInData, setSignInData] = useState({
         email: '',
         password: '',
     });
+
+    // Sign Up Form
+    const [signUpData, setSignUpData] = useState({
+        companyName: '',
+        ownerName: '',
+        email: '',
+        phone: '',
+        gstNumber: '',
+        businessType: BusinessType.GENERAL_STORE,
+        street: '',
+        city: '',
+        state: '',
+        pincode: '',
+        country: 'India',
+        password: '',
+        confirmPassword: '',
+    });
+
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        // Redirect if already logged in
         if (user) {
             router.push('/dashboard');
             return;
         }
 
-        // Check if redirected from registration
         if (searchParams.get('registered') === 'true') {
             setShowSuccess(true);
-            setIsLogin(true); // Show login tab
+            setActiveTab('signin');
             setTimeout(() => setShowSuccess(false), 5000);
         }
     }, [searchParams, user, router]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSignInChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
-        }
+        setSignInData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSignUpChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setSignUpData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    };
+
+    const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setErrors({});
 
         try {
-            await login(formData.email, formData.password);
+            await login(signInData.email, signInData.password);
         } catch (error: any) {
             setErrors({ submit: error.message || 'Login failed' });
         } finally {
@@ -54,120 +82,352 @@ function AuthPageContent() {
         }
     };
 
+    const handleSignUp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setErrors({});
+
+        // Basic validation
+        const newErrors: Record<string, string> = {};
+        if (!signUpData.companyName) newErrors.companyName = 'Required';
+        if (!signUpData.ownerName) newErrors.ownerName = 'Required';
+        if (!signUpData.email) newErrors.email = 'Required';
+        if (!signUpData.phone || !/^[6-9]\d{9}$/.test(signUpData.phone)) {
+            newErrors.phone = 'Invalid phone';
+        }
+        if (!signUpData.gstNumber) newErrors.gstNumber = 'Required';
+        if (!signUpData.street) newErrors.street = 'Required';
+        if (!signUpData.city) newErrors.city = 'Required';
+        if (!signUpData.state) newErrors.state = 'Required';
+        if (!signUpData.pincode || !/^\d{6}$/.test(signUpData.pincode)) {
+            newErrors.pincode = 'Invalid pincode';
+        }
+        if (!signUpData.password || signUpData.password.length < 8) {
+            newErrors.password = 'Min 8 characters';
+        }
+        if (signUpData.password !== signUpData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(signUpData),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Registration failed');
+            }
+
+            setShowSuccess(true);
+            setActiveTab('signin');
+            // Clear form
+            setSignUpData({
+                companyName: '',
+                ownerName: '',
+                email: '',
+                phone: '',
+                gstNumber: '',
+                businessType: BusinessType.GENERAL_STORE,
+                street: '',
+                city: '',
+                state: '',
+                pincode: '',
+                country: 'India',
+                password: '',
+                confirmPassword: '',
+            });
+        } catch (error: any) {
+            setErrors({ submit: error.message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#0a0e1a' }}>
+            <div style={{ maxWidth: '500px', width: '100%' }}>
+                {/* Logo */}
+                <div className="text-center mb-6">
+                    <div className="text-4xl mb-2">🛍️</div>
+                    <h1 className="text-3xl font-bold" style={{ color: '#6366f1' }}>
                         AI Retail System
                     </h1>
-                    <p className="text-gray-600">
-                        {isLogin ? 'Sign in to your seller account' : 'Create your seller account'}
+                    <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>
+                        Smart inventory management for retailers
                     </p>
                 </div>
 
-                {/* Form Card */}
-                <div className="bg-white rounded-2xl shadow-xl p-8">
-                    {/* Tab Switcher */}
-                    <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-lg">
+                {/* Success Message */}
+                {showSuccess && (
+                    <div className="success">
+                        ✓ Registration successful! Please sign in to continue.
+                    </div>
+                )}
+
+                {/* Auth Card */}
+                <div className="card">
+                    {/* Tabs */}
+                    <div className="tabs">
                         <button
-                            type="button"
-                            onClick={() => setIsLogin(true)}
-                            className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${isLogin
-                                ? 'bg-white text-purple-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                            className={`tab ${activeTab === 'signin' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('signin');
+                                setErrors({});
+                            }}
                         >
                             Sign In
                         </button>
                         <button
-                            type="button"
-                            onClick={() => router.push('/register')}
-                            className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${!isLogin
-                                ? 'bg-white text-purple-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                            className={`tab ${activeTab === 'signup' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('signup');
+                                setErrors({});
+                            }}
                         >
                             Sign Up
                         </button>
                     </div>
 
-                    {/* Success Message */}
-                    {showSuccess && (
-                        <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-start">
-                            <svg className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                                <p className="font-medium">Registration Successful!</p>
-                                <p className="text-sm">Please login with your credentials to continue.</p>
+                    {/* Sign In Form */}
+                    {activeTab === 'signin' && (
+                        <form onSubmit={handleSignIn}>
+                            <div className="input-group">
+                                <label className="label">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={signInData.email}
+                                    onChange={handleSignInChange}
+                                    className="input"
+                                    placeholder="your@email.com"
+                                    required
+                                />
+                                {errors.email && <div className="error">{errors.email}</div>}
                             </div>
-                        </div>
+
+                            <div className="input-group">
+                                <label className="label">Password</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={signInData.password}
+                                    onChange={handleSignInChange}
+                                    className="input"
+                                    placeholder="Enter password"
+                                    required
+                                />
+                                {errors.password && <div className="error">{errors.password}</div>}
+                            </div>
+
+                            {errors.submit && <div className="error mb-4">{errors.submit}</div>}
+
+                            <button type="submit" className="btn btn-success btn-full" disabled={loading}>
+                                {loading ? 'Signing in...' : '🔓 Sign In'}
+                            </button>
+                        </form>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Email Address
-                            </label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="your@email.com"
-                                required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
-                            {errors.email && (
-                                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Password
-                            </label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Enter your password"
-                                required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
-                            {errors.password && (
-                                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-                            )}
-                        </div>
-
-                        {errors.submit && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                                {errors.submit}
+                    {/* Sign Up Form */}
+                    {activeTab === 'signup' && (
+                        <form onSubmit={handleSignUp}>
+                            <div className="input-group">
+                                <label className="label">Company Name *</label>
+                                <input
+                                    type="text"
+                                    name="companyName"
+                                    value={signUpData.companyName}
+                                    onChange={handleSignUpChange}
+                                    className="input"
+                                    placeholder="Your Store Name"
+                                />
+                                {errors.companyName && <div className="error">{errors.companyName}</div>}
                             </div>
-                        )}
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? 'Signing in...' : 'Sign In'}
-                        </button>
-                    </form>
+                            <div className="input-group">
+                                <label className="label">Owner Name *</label>
+                                <input
+                                    type="text"
+                                    name="ownerName"
+                                    value={signUpData.ownerName}
+                                    onChange={handleSignUpChange}
+                                    className="input"
+                                    placeholder="Your Name"
+                                />
+                                {errors.ownerName && <div className="error">{errors.ownerName}</div>}
+                            </div>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-600">
-                            Don&apos;ve an account?{' '}
-                            <button
-                                onClick={() => router.push('/register')}
-                                className="text-purple-600 hover:underline font-medium"
-                            >
-                                Register as a seller
+                            <div className="grid grid-2">
+                                <div className="input-group">
+                                    <label className="label">Email *</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={signUpData.email}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="your@email.com"
+                                    />
+                                    {errors.email && <div className="error">{errors.email}</div>}
+                                </div>
+
+                                <div className="input-group">
+                                    <label className="label">Phone *</label>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={signUpData.phone}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="9876543210"
+                                        maxLength={10}
+                                    />
+                                    {errors.phone && <div className="error">{errors.phone}</div>}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-2">
+                                <div className="input-group">
+                                    <label className="label">GST Number *</label>
+                                    <input
+                                        type="text"
+                                        name="gstNumber"
+                                        value={signUpData.gstNumber}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="22AAAAA0000A1Z5"
+                                    />
+                                    {errors.gstNumber && <div className="error">{errors.gstNumber}</div>}
+                                </div>
+
+                                <div className="input-group">
+                                    <label className="label">Business Type</label>
+                                    <select
+                                        name="businessType"
+                                        value={signUpData.businessType}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                    >
+                                        {Object.values(BusinessType).map((type) => (
+                                            <option key={type} value={type}>
+                                                {type.replace(/_/g, ' ')}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="input-group">
+                                <label className="label">Street Address *</label>
+                                <input
+                                    type="text"
+                                    name="street"
+                                    value={signUpData.street}
+                                    onChange={handleSignUpChange}
+                                    className="input"
+                                    placeholder="123 Main Street"
+                                />
+                                {errors.street && <div className="error">{errors.street}</div>}
+                            </div>
+
+                            <div className="grid grid-2">
+                                <div className="input-group">
+                                    <label className="label">City *</label>
+                                    <input
+                                        type="text"
+                                        name="city"
+                                        value={signUpData.city}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="Mumbai"
+                                    />
+                                    {errors.city && <div className="error">{errors.city}</div>}
+                                </div>
+
+                                <div className="input-group">
+                                    <label className="label">State *</label>
+                                    <input
+                                        type="text"
+                                        name="state"
+                                        value={signUpData.state}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="Maharashtra"
+                                    />
+                                    {errors.state && <div className="error">{errors.state}</div>}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-2">
+                                <div className="input-group">
+                                    <label className="label">Pincode *</label>
+                                    <input
+                                        type="text"
+                                        name="pincode"
+                                        value={signUpData.pincode}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="400001"
+                                        maxLength={6}
+                                    />
+                                    {errors.pincode && <div className="error">{errors.pincode}</div>}
+                                </div>
+
+                                <div className="input-group">
+                                    <label className="label">Country</label>
+                                    <input
+                                        type="text"
+                                        name="country"
+                                        value={signUpData.country}
+                                        className="input"
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-2">
+                                <div className="input-group">
+                                    <label className="label">Password *</label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        value={signUpData.password}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="Min 8 characters"
+                                    />
+                                    {errors.password && <div className="error">{errors.password}</div>}
+                                </div>
+
+                                <div className="input-group">
+                                    <label className="label">Confirm Password *</label>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={signUpData.confirmPassword}
+                                        onChange={handleSignUpChange}
+                                        className="input"
+                                        placeholder="Re-enter password"
+                                    />
+                                    {errors.confirmPassword && <div className="error">{errors.confirmPassword}</div>}
+                                </div>
+                            </div>
+
+                            {errors.submit && <div className="error mb-4">{errors.submit}</div>}
+
+                            <button type="submit" className="btn btn-purple btn-full" disabled={loading}>
+                                {loading ? 'Creating Account...' : '👤 Create Account'}
                             </button>
-                        </p>
-                    </div>
+                        </form>
+                    )}
                 </div>
             </div>
         </div>
@@ -177,11 +437,11 @@ function AuthPageContent() {
 export default function AuthPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
-                <div className="w-8 h-8 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0e1a' }}>
+                <div style={{ color: 'white' }}>Loading...</div>
             </div>
         }>
-            <AuthPageContent />
+            <AuthContent />
         </Suspense>
     );
 }

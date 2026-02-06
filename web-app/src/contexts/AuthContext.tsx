@@ -9,6 +9,7 @@ interface User {
     $id: string;
     email: string;
     companyName: string;
+    ownerName: string;
     setupCompleted: boolean;
 }
 
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 $id: session.$id,
                 email: session.email,
                 companyName: prefs?.companyName || 'Your Store',
+                ownerName: session.name || 'Owner',
                 setupCompleted: prefs?.setupCompleted || false,
             };
 

@@ -1,88 +1,110 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from './Button';
+import { AlertTriangle, X } from 'lucide-react';
 
 interface ConfirmDialogProps {
     isOpen: boolean;
     title: string;
     message: string;
-    confirmText?: string;
-    cancelText?: string;
     onConfirm: () => void;
     onCancel: () => void;
-    variant?: 'danger' | 'warning' | 'info';
+    confirmText?: string;
+    isLoading?: boolean;
 }
 
 export default function ConfirmDialog({
     isOpen,
     title,
     message,
-    confirmText = 'Confirm',
-    cancelText = 'Cancel',
     onConfirm,
     onCancel,
-    variant = 'danger'
+    confirmText = 'Confirm',
+    isLoading = false
 }: ConfirmDialogProps) {
-    if (!isOpen) return null;
 
-    const variantStyles = {
-        danger: {
-            bg: 'bg-red-500 shadow-red-500/20',
-            border: 'border-red-500/20',
-            text: 'text-red-500',
-            bgLight: 'bg-red-500/10',
-            icon: '⚠️'
-        },
-        warning: {
-            bg: 'bg-orange-500 shadow-orange-500/20',
-            border: 'border-orange-500/20',
-            text: 'text-orange-500',
-            bgLight: 'bg-orange-500/10',
-            icon: '⚡'
-        },
-        info: {
-            bg: 'bg-blue-500 shadow-blue-500/20',
-            border: 'border-blue-500/20',
-            text: 'text-blue-500',
-            bgLight: 'bg-blue-500/10',
-            icon: 'ℹ️'
-        }
-    };
-
-    const style = variantStyles[variant];
+    // Close on ESC
+    React.useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onCancel();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onCancel]);
 
     return (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
-            <div className="glass-card rounded-3xl shadow-2xl max-w-md w-full p-8 border border-white/10 animate-in zoom-in-95 duration-300">
-                <div className="flex flex-col items-center text-center gap-6">
-                    <div className={`w-20 h-20 ${style.bgLight} ${style.border} border rounded-2xl flex items-center justify-center text-4xl shadow-lg`}>
-                        {style.icon}
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">
-                            {title}
-                        </h3>
-                        <p className="text-muted-foreground font-medium leading-relaxed">
-                            {message}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 mt-10">
-                    <button
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         onClick={onCancel}
-                        className="flex-1 h-14 bg-secondary border border-border/50 text-foreground font-bold rounded-2xl hover:bg-muted transition-all active:scale-95 uppercase tracking-widest text-xs"
+                        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                    />
+
+                    {/* Content */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                        className="relative w-full max-w-md glass-surface-strong rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
                     >
-                        {cancelText}
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className={`flex-1 h-14 ${style.bg} text-white font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-xs`}
-                    >
-                        {confirmText}
-                    </button>
+                        {/* Status bar */}
+                        <div className="h-1.5 w-full bg-red-500/20">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: '100%' }}
+                                transition={{ duration: 0.5 }}
+                                className="h-full bg-red-500"
+                            />
+                        </div>
+
+                        <div className="p-8">
+                            <div className="flex items-start justify-between gap-4 mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 animate-pulse">
+                                    <AlertTriangle size={24} />
+                                </div>
+                                <button
+                                    onClick={onCancel}
+                                    className="p-2 text-slate-500 hover:text-white transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <h3 className="text-xl font-bold premium-gradient-text mb-2">{title}</h3>
+                            <p className="text-sm text-slate-400 leading-relaxed mb-8">
+                                {message}
+                            </p>
+
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="ghost"
+                                    onClick={onCancel}
+                                    className="flex-1"
+                                    disabled={isLoading}
+                                >
+                                    Abort
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    onClick={onConfirm}
+                                    className="flex-1 shadow-[0_0_20px_rgba(239, 68, 68, 0.2)]"
+                                    isLoading={isLoading}
+                                >
+                                    {confirmText}
+                                </Button>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
-            </div>
-        </div>
+            )}
+        </AnimatePresence>
     );
 }

@@ -34,7 +34,7 @@ export interface IProductRepository {
     /**
      * Search products by name or description
      */
-    search(query: string, shopId: string): Promise<Product[]>;
+    search(query: string, shopId: string, category?: string): Promise<Product[]>;
 
     /**
      * Update product quantity (for inventory management)

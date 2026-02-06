@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: "AI Retail System",
   description: "Smart inventory management platform for retailers",
   manifest: "/manifest.json",
-  themeColor: "#9333ea",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -26,12 +25,14 @@ export const metadata: Metadata = {
       { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
+};
+
+export const viewport = {
+  themeColor: "#3b82f6",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

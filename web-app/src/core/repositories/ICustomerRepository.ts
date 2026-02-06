@@ -8,6 +8,10 @@ export interface Customer {
     email: string;
     phone: string;
     address: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    notes?: string;
     totalSpending: number;
     lastPurchaseDate?: Date;
     createdAt: Date;
@@ -20,6 +24,10 @@ export interface CreateCustomerDTO {
     email: string;
     phone: string;
     address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    notes?: string;
     totalSpending?: number;
 }
 
@@ -29,4 +37,5 @@ export interface ICustomerRepository {
     create(data: CreateCustomerDTO): Promise<Customer>;
     update(id: string, data: Partial<CreateCustomerDTO>): Promise<Customer>;
     delete(id: string): Promise<void>;
+    search(query: string, sellerId: string): Promise<Customer[]>;
 }

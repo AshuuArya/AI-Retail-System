@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const sellerId = searchParams.get('sellerId');
+        const search = searchParams.get('search') || undefined;
+        const category = searchParams.get('category') || undefined;
 
         if (!sellerId) {
             return NextResponse.json(
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const products = await getProductsUseCase.execute(sellerId);
+        const products = await getProductsUseCase.execute(sellerId, search, category);
 
         return NextResponse.json({
             products,

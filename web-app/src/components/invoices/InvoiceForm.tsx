@@ -3,19 +3,37 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input, TextArea } from '@/components/ui/Input';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    User,
+    CreditCard,
+    ShoppingCart,
+    Plus,
+    Trash2,
+    Check,
+    AlertCircle,
+    Search,
+    Type,
+    Wallet,
+    Smartphone,
+    FileText
+} from 'lucide-react';
 
 interface Customer {
-    $id: string;
+    id: string;
     name: string;
     email: string;
     phone: string;
 }
 
 interface Product {
-    $id: string;
-    name: string;
-    price: number;
-    stock: number;
+    id: string;
+    itemName: string;
+    sellPrice: number;
+    quantity: number;
     unit: string;
 }
 
@@ -33,11 +51,9 @@ export default function InvoiceForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Data
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
 
-    // Form state
     const [selectedCustomerId, setSelectedCustomerId] = useState('');
     const [items, setItems] = useState<InvoiceItem[]>([]);
     const [discount, setDiscount] = useState(0);
@@ -45,19 +61,19 @@ export default function InvoiceForm() {
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
 
     useEffect(() => {
-        fetchCustomers();
-        fetchProducts();
-    }, []);
+        if (user?.$id) {
+            fetchCustomers();
+            fetchProducts();
+        }
+    }, [user?.$id]);
 
     const fetchCustomers = async () => {
         try {
             const response = await fetch(`/api/customers?sellerId=${user?.$id}`);
             const data = await response.json();
-            if (response.ok) {
-                setCustomers(data.customers || []);
-            }
+            if (response.ok) setCustomers(data.customers || []);
         } catch (error) {
-            console.error('Error fetching customers:', error);
+            console.error('Error:', error);
         }
     };
 
@@ -65,16 +81,14 @@ export default function InvoiceForm() {
         try {
             const response = await fetch(`/api/products?sellerId=${user?.$id}`);
             const data = await response.json();
-            if (response.ok) {
-                setProducts(data.products || []);
-            }
+            if (response.ok) setProducts(data.products || []);
         } catch (error) {
-            console.error('Error fetching products:', error);
+            console.error('Error:', error);
         }
     };
 
     const addItem = (productId: string) => {
-        const product = products.find(p => p.$id === productId);
+        const product = products.find(p => p.id === productId);
         if (!product) return;
 
         const existingItem = items.find(item => item.productId === productId);
@@ -82,11 +96,11 @@ export default function InvoiceForm() {
             updateItemQuantity(productId, existingItem.quantity + 1);
         } else {
             setItems([...items, {
-                productId: product.$id,
-                productName: product.name,
+                productId: product.id,
+                productName: product.itemName,
                 quantity: 1,
-                price: product.price,
-                total: product.price
+                price: product.sellPrice,
+                total: product.sellPrice
             }]);
         }
     };
@@ -96,7 +110,6 @@ export default function InvoiceForm() {
             removeItem(productId);
             return;
         }
-
         setItems(items.map(item =>
             item.productId === productId
                 ? { ...item, quantity, total: item.price * quantity }
@@ -117,14 +130,8 @@ export default function InvoiceForm() {
         setLoading(true);
         setError('');
 
-        if (!selectedCustomerId) {
-            setError('Please select a customer');
-            setLoading(false);
-            return;
-        }
-
-        if (items.length === 0) {
-            setError('Please add at least one product');
+        if (!selectedCustomerId || items.length === 0) {
+            setError('Please select a customer and add items');
             setLoading(false);
             return;
         }
@@ -136,13 +143,7 @@ export default function InvoiceForm() {
                 body: JSON.stringify({
                     sellerId: user?.$id,
                     customerId: selectedCustomerId,
-                    items: items.map(item => ({
-                        productId: item.productId,
-                        productName: item.productName,
-                        quantity: item.quantity,
-                        price: item.price,
-                        total: item.total
-                    })),
+                    items,
                     subtotal,
                     discount: discountAmount,
                     total,
@@ -152,12 +153,7 @@ export default function InvoiceForm() {
                 }),
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to create invoice');
-            }
-
+            if (!response.ok) throw new Error('Invoice generation failed');
             router.push('/dashboard/invoices');
         } catch (err: any) {
             setError(err.message);
@@ -167,176 +163,228 @@ export default function InvoiceForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    {error}
-                </div>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-8 pb-20">
+            <AnimatePresence>
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm font-medium"
+                    >
+                        <AlertCircle size={18} />
+                        {error}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* Customer Selection */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">1. Select Customer</h3>
-                <select
-                    value={selectedCustomerId}
-                    onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                    <option value="">Choose a customer...</option>
-                    {customers.map(customer => (
-                        <option key={customer.$id} value={customer.$id}>
-                            {customer.name} - {customer.phone}
-                        </option>
-                    ))}
-                </select>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* 1. Customer Selection */}
+                <Card className="border-white/5" padding="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+                            <User size={18} />
+                        </div>
+                        <h3 className="text-sm font-bold text-white uppercase tracking-widest">1. Customer Selection</h3>
+                    </div>
+                    <div className="space-y-4">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Billed To</label>
+                        <div className="relative">
+                            <select
+                                value={selectedCustomerId}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedCustomerId(e.target.value)}
+                                className="w-full pl-4 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-200 focus:border-blue-500/50 outline-none transition-all appearance-none h-[46px]"
+                                required
+                            >
+                                <option value="" className="bg-slate-900 font-sans">Search for a customer...</option>
+                                {customers.map(c => (
+                                    <option key={c.id} value={c.id} className="bg-slate-900 font-sans">{c.name} ({c.phone})</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                <Search size={16} />
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* 2. Payment Method */}
+                <Card className="border-white/10" padding="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+                            <CreditCard size={18} />
+                        </div>
+                        <h3 className="text-sm font-bold text-white uppercase tracking-widest">2. Payment Method</h3>
+                    </div>
+                    <div className="flex gap-3">
+                        {[
+                            { id: 'cash', icon: Wallet, label: 'Cash' },
+                            { id: 'card', icon: CreditCard, label: 'Card' },
+                            { id: 'upi', icon: Smartphone, label: 'UPI' }
+                        ].map(method => (
+                            <button
+                                key={method.id}
+                                type="button"
+                                onClick={() => setPaymentMethod(method.id as any)}
+                                className={`flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all ${paymentMethod === method.id
+                                    ? 'bg-blue-600 border-blue-500 text-white shadow-lg'
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                                    }`}
+                            >
+                                <method.icon size={20} />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">{method.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </Card>
             </div>
 
-            {/* Product Selection */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">2. Add Products</h3>
-                <select
-                    onChange={(e) => {
-                        addItem(e.target.value);
-                        e.target.value = '';
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4"
-                >
-                    <option value="">Select product to add...</option>
-                    {products.map(product => (
-                        <option key={product.$id} value={product.$id}>
-                            {product.name} - ₹{product.price} (Stock: {product.stock})
-                        </option>
-                    ))}
-                </select>
+            {/* 3. Items Selection */}
+            <Card className="border-white/5 overflow-hidden" padding="p-0">
+                <div className="p-6 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+                            <ShoppingCart size={18} />
+                        </div>
+                        <h3 className="text-sm font-bold text-white uppercase tracking-widest">3. Invoice Items</h3>
+                    </div>
 
-                {/* Items List */}
-                {items.length > 0 && (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                    <div className="md:w-72 relative">
+                        <select
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { addItem(e.target.value); e.target.value = ''; }}
+                            className="w-full pl-4 pr-10 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-200 focus:border-blue-500/50 outline-none transition-all appearance-none"
+                        >
+                            <option value="" className="bg-slate-900">Add from catalog...</option>
+                            {products.map(p => (
+                                <option key={p.id} value={p.id} className="bg-slate-900">{p.itemName} - ₹{p.sellPrice}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                            <Plus size={14} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="bg-white/[0.02] border-b border-white/10">
+                                <th className="text-left px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Product</th>
+                                <th className="text-center px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Quantity</th>
+                                <th className="text-right px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Price</th>
+                                <th className="text-right px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total</th>
+                                <th className="w-20 px-8 py-5"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {items.length === 0 ? (
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                                    <th className="px-4 py-3"></th>
+                                    <td colSpan={5} className="px-8 py-12 text-center text-slate-500 italic text-sm">
+                                        No items added to invoice yet.
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {items.map((item) => (
-                                    <tr key={item.productId}>
-                                        <td className="px-4 py-3 text-sm text-gray-900">{item.productName}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-900">₹{item.price}</td>
-                                        <td className="px-4 py-3">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={item.quantity}
-                                                onChange={(e) => updateItemQuantity(item.productId, parseInt(e.target.value) || 0)}
-                                                className="w-20 px-2 py-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded"
-                                            />
+                            ) : (
+                                items.map(item => (
+                                    <tr key={item.productId} className="hover:bg-white/[0.01] transition-colors">
+                                        <td className="px-8 py-5">
+                                            <p className="font-bold text-white text-sm">{item.productName}</p>
                                         </td>
-                                        <td className="px-4 py-3 text-sm font-semibold text-gray-900">₹{item.total.toFixed(2)}</td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center justify-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateItemQuantity(item.productId, item.quantity - 1)}
+                                                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 transition-all border border-white/10"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="text-sm font-bold text-white w-6 text-center">{item.quantity}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateItemQuantity(item.productId, item.quantity + 1)}
+                                                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 transition-all border border-white/10"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5 text-right font-medium text-slate-400 text-sm">₹{item.price.toFixed(2)}</td>
+                                        <td className="px-8 py-5 text-right font-bold text-white text-sm">₹{item.total.toFixed(2)}</td>
+                                        <td className="px-8 py-5 text-right">
                                             <button
                                                 type="button"
                                                 onClick={() => removeItem(item.productId)}
-                                                className="text-red-600 hover:text-red-800"
+                                                className="p-2 text-slate-500 hover:text-red-400 transition-colors"
                                             >
-                                                ✕
+                                                <Trash2 size={18} />
                                             </button>
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
-
-            {/* Totals & Payment */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">3. Payment Details</h3>
-
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Subtotal:</span>
-                        <span className="text-lg font-semibold">₹{subtotal.toFixed(2)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                        <label className="text-gray-600">Discount (%):</label>
-                        <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={discount}
-                            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                            className="w-24 px-3 py-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg"
-                        />
-                    </div>
-
-                    {discount > 0 && (
-                        <div className="flex justify-between items-center text-green-600">
-                            <span>Discount Amount:</span>
-                            <span>-₹{discountAmount.toFixed(2)}</span>
-                        </div>
-                    )}
-
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                        <span className="text-xl font-bold text-gray-900">Total:</span>
-                        <span className="text-2xl font-bold text-purple-600">₹{total.toFixed(2)}</span>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
-                        <div className="flex gap-4">
-                            {(['cash', 'card', 'upi'] as const).map(method => (
-                                <label key={method} className="flex items-center">
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value={method}
-                                        checked={paymentMethod === method}
-                                        onChange={(e) => setPaymentMethod(e.target.value as any)}
-                                        className="mr-2"
-                                    />
-                                    <span className="capitalize">{method}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes (Optional)</label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            rows={3}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            placeholder="Add any additional notes..."
-                        />
-                    </div>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
+            </Card>
 
-            {/* Actions */}
-            <div className="flex gap-4 justify-end">
-                <button
-                    type="button"
-                    onClick={() => router.back()}
-                    className="px-6 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition-colors"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="submit"
-                    disabled={loading || items.length === 0}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {loading ? 'Creating...' : 'Create Invoice'}
-                </button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Notes */}
+                <div className="lg:col-span-2">
+                    <Card className="border-white/5 h-full" padding="p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+                                <FileText size={18} />
+                            </div>
+                            <h3 className="text-sm font-bold text-white uppercase tracking-widest">Internal Ledger Notes</h3>
+                        </div>
+                        <TextArea
+                            label=""
+                            className="min-h-[120px]"
+                            value={notes}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
+                            placeholder="Public or private transaction notes..."
+                        />
+                    </Card>
+                </div>
+
+                {/* Totals */}
+                <Card className="border-white/10 bg-white/[0.02]" padding="p-6">
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <div className="flex justify-between text-xs font-medium text-slate-500 uppercase tracking-widest">
+                                <span>Subtotal</span>
+                                <span className="text-slate-300 font-bold">₹{subtotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-medium text-slate-500 uppercase tracking-widest">
+                                <span>Discount (%)</span>
+                                <div className="w-20">
+                                    <Input
+                                        type="number"
+                                        className="h-9 px-3 text-center"
+                                        value={discount}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiscount(parseFloat(e.target.value) || 0)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-white/10 space-y-4">
+                            <div className="flex justify-between items-end">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Grand Total</span>
+                                <span className="text-3xl font-bold text-white tracking-tighter">₹{total.toFixed(2)}</span>
+                            </div>
+                            <Button
+                                type="submit"
+                                disabled={loading || items.length === 0}
+                                className="w-full h-14 bg-blue-600 hover:bg-blue-500 border-0 shadow-lg shadow-blue-600/20 rounded-2xl font-bold text-sm"
+                                isLoading={loading}
+                            >
+                                <Check size={20} className="mr-2" />
+                                {loading ? 'Processing...' : 'Generate Invoice'}
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
             </div>
         </form>
     );

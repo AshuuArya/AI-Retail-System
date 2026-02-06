@@ -52,6 +52,10 @@ export class AppwriteCustomerRepository implements ICustomerRepository {
                 email: data.email,
                 phone: data.phone,
                 address: data.address || '',
+                city: data.city || '',
+                state: data.state || '',
+                pincode: data.pincode || '',
+                notes: data.notes || '',
                 totalSpending: 0,
             }
         );
@@ -60,11 +64,22 @@ export class AppwriteCustomerRepository implements ICustomerRepository {
     }
 
     async update(id: string, data: Partial<CreateCustomerDTO>): Promise<Customer> {
+        const updateData: any = {};
+        if (data.name) updateData.name = data.name;
+        if (data.email !== undefined) updateData.email = data.email;
+        if (data.phone) updateData.phone = data.phone;
+        if (data.address !== undefined) updateData.address = data.address;
+        if (data.city !== undefined) updateData.city = data.city;
+        if (data.state !== undefined) updateData.state = data.state;
+        if (data.pincode !== undefined) updateData.pincode = data.pincode;
+        if (data.notes !== undefined) updateData.notes = data.notes;
+        if (data.totalSpending !== undefined) updateData.totalSpending = data.totalSpending;
+
         const doc = await this.db.updateDocument(
             this.databaseId,
             this.collectionId,
             id,
-            data
+            updateData
         );
 
         return this.mapToCustomer(doc);
@@ -78,6 +93,19 @@ export class AppwriteCustomerRepository implements ICustomerRepository {
         );
     }
 
+    async search(query: string, sellerId: string): Promise<Customer[]> {
+        const response = await this.db.listDocuments(
+            this.databaseId,
+            this.collectionId,
+            [
+                Query.equal('sellerId', sellerId),
+                Query.search('name', query)
+            ]
+        );
+
+        return response.documents.map(doc => this.mapToCustomer(doc));
+    }
+
     private mapToCustomer(doc: any): Customer {
         return {
             id: doc.$id,
@@ -86,6 +114,10 @@ export class AppwriteCustomerRepository implements ICustomerRepository {
             email: doc.email,
             phone: doc.phone,
             address: doc.address,
+            city: doc.city,
+            state: doc.state,
+            pincode: doc.pincode,
+            notes: doc.notes,
             totalSpending: doc.totalSpending || 0,
             lastPurchaseDate: doc.lastPurchaseDate ? new Date(doc.lastPurchaseDate) : undefined,
             createdAt: new Date(doc.$createdAt),

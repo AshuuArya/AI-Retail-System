@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const sellerId = searchParams.get('sellerId');
+        const search = searchParams.get('search') || undefined;
 
         if (!sellerId) {
             return NextResponse.json(
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const customers = await manageCustomersUseCase.getCustomers(sellerId);
+        const customers = await manageCustomersUseCase.getCustomers(sellerId, search);
 
         return NextResponse.json({
             customers,

@@ -1,143 +1,73 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-
-@theme {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --radius: var(--radius);
-}
 
 :root {
-    --background: #0f111a;
+    --background: #0a0b10;
     --foreground: #f8fafc;
-    --card: #161a29;
-    --card-foreground: #f8fafc;
-    --popover: #161a29;
-    --popover-foreground: #f8fafc;
-    --primary: #9333ea;
-    --primary-foreground: #ffffff;
-    --secondary: #1e293b;
-    --secondary-foreground: #f8fafc;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --accent: #9333ea;
-    --accent-foreground: #f8fafc;
-    --destructive: #ef4444;
-    --destructive-foreground: #f8fafc;
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #9333ea;
-    --radius: 0.75rem;
+    --primary: #3b82f6;
+    --secondary: #64748b;
+    --accent: #8b5cf6;
+    --border: rgba(255, 255, 255, 0.1);
 }
 
-.light {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-    --card: #ffffff;
-    --card-foreground: #0f172a;
-    --popover: #ffffff;
-    --popover-foreground: #0f172a;
-    --primary: #9333ea;
-    --primary-foreground: #ffffff;
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
-    --accent: #f1f5f9;
-    --accent-foreground: #0f172a;
-    --destructive: #ef4444;
-    --destructive-foreground: #f8fafc;
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #9333ea;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-@layer base {
-    * {
-        border-color: var(--border);
-    }
-
-    body {
-        background-color: var(--background);
-        color: var(--foreground);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        font-family: 'Outfit', sans-serif;
-    }
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.5;
 }
 
-@layer components {
-    .glass-card {
-        @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
-    }
-
-    .premium-gradient {
-        @apply bg-gradient-to-br from-purple-600 via-purple-500 to-blue-600;
-    }
-
-    .text-glow {
-        text-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
-    }
-
-    .card-hover {
-        @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-500/20;
-    }
+.premium-gradient-text {
+    color: #fff;
 }
 
-/* Custom Animations */
-@keyframes float {
-    0% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
-
-    100% {
-        transform: translateY(0px);
-    }
+.glass-surface {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
 }
 
-.animate-float {
-    animation: float 3s ease-in-out infinite;
+.glass-surface-strong {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Scrollbar styling */
+.obsidian-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+}
+
+.obsidian-card:hover {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    @apply bg-background;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    @apply bg-muted rounded-full hover:bg-muted-foreground transition-colors;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }

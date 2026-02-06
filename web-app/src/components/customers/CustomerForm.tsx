@@ -3,6 +3,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/ui/Card';
+import { Input, TextArea } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Phone, Mail, MapPin, FileText, Check, AlertCircle } from 'lucide-react';
 
 interface CustomerFormData {
     name: string;
@@ -19,9 +24,10 @@ interface CustomerFormProps {
     initialData?: Partial<CustomerFormData>;
     customerId?: string;
     onSuccess?: () => void;
+    isEdit?: boolean;
 }
 
-export default function CustomerForm({ initialData, customerId, onSuccess }: CustomerFormProps) {
+export default function CustomerForm({ initialData, customerId, onSuccess, isEdit }: CustomerFormProps) {
     const router = useRouter();
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -51,24 +57,14 @@ export default function CustomerForm({ initialData, customerId, onSuccess }: Cus
         setLoading(true);
         setError('');
 
-        // Validation
-        if (!formData.name.trim()) {
-            setError('Customer name is required');
-            setLoading(false);
-            return;
-        }
-
-        if (!formData.phone.trim()) {
-            setError('Phone number is required');
+        if (!formData.name.trim() || !formData.phone.trim()) {
+            setError('Name and phone number are required');
             setLoading(false);
             return;
         }
 
         try {
-            const url = customerId
-                ? `/api/customers/${customerId}`
-                : '/api/customers';
-
+            const url = customerId ? `/api/customers/${customerId}` : '/api/customers';
             const method = customerId ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
@@ -80,17 +76,13 @@ export default function CustomerForm({ initialData, customerId, onSuccess }: Cus
                 }),
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
+                const data = await response.json();
                 throw new Error(data.message || 'Failed to save customer');
             }
 
-            if (onSuccess) {
-                onSuccess();
-            } else {
-                router.push('/dashboard/customers');
-            }
+            if (onSuccess) onSuccess();
+            else router.push('/dashboard/customers');
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -99,156 +91,133 @@ export default function CustomerForm({ initialData, customerId, onSuccess }: Cus
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    {error}
-                </div>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-8">
+            <AnimatePresence>
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm font-medium"
+                    >
+                        <AlertCircle size={18} />
+                        {error}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* Basic Information */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Customer Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
+            {/* Identity Info */}
+            <div className="space-y-6">
+                <div className="flex items-center gap-3 ml-1">
+                    <User size={16} className="text-slate-500" />
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Customer Identity</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                        <Input
+                            label="Full Name *"
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            placeholder="John Doe"
+                            placeholder="e.g., John Doe"
+                            icon={<User size={16} />}
                         />
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phone Number <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            required
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            placeholder="+91 98765 43210"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            placeholder="john@example.com"
-                        />
-                    </div>
+                    <Input
+                        label="Phone Number *"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                        placeholder="+91..."
+                        icon={<Phone size={16} />}
+                    />
+                    <Input
+                        label="Email Address"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="john@example.com"
+                        icon={<Mail size={16} />}
+                    />
                 </div>
             </div>
 
-            {/* Address Information */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Address Information</h3>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Street Address
-                        </label>
-                        <input
-                            type="text"
+            {/* Location */}
+            <div className="space-y-6 pt-4">
+                <div className="flex items-center gap-3 ml-1">
+                    <MapPin size={16} className="text-slate-500" />
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Location Details</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-3">
+                        <Input
+                            label="Street Address"
                             name="address"
                             value={formData.address}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            placeholder="123 Main Street"
+                            placeholder="Apt 123, Street Name"
                         />
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                City
-                            </label>
-                            <input
-                                type="text"
-                                name="city"
-                                value={formData.city}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                placeholder="Mumbai"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                State
-                            </label>
-                            <input
-                                type="text"
-                                name="state"
-                                value={formData.state}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                placeholder="Maharashtra"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Pincode
-                            </label>
-                            <input
-                                type="text"
-                                name="pincode"
-                                value={formData.pincode}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                placeholder="400001"
-                            />
-                        </div>
-                    </div>
+                    <Input
+                        label="City"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                    />
+                    <Input
+                        label="State"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                    />
+                    <Input
+                        label="Pincode"
+                        name="pincode"
+                        value={formData.pincode}
+                        onChange={handleChange}
+                    />
                 </div>
             </div>
 
-            {/* Additional Notes */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Additional Notes</h3>
-                <textarea
+            {/* Additional Info */}
+            <div className="space-y-6 pt-4">
+                <div className="flex items-center gap-3 ml-1">
+                    <FileText size={16} className="text-slate-500" />
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Additional Context</h3>
+                </div>
+                <TextArea
+                    label="Internal Notes"
                     name="notes"
                     value={formData.notes}
                     onChange={handleChange}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Any additional information about the customer..."
+                    placeholder="Any specific preferences or history for this customer..."
+                    className="min-h-[120px]"
                 />
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4 justify-end">
-                <button
+            <div className="flex items-center justify-end gap-4 pt-8 border-t border-white/5">
+                <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => router.back()}
-                    className="px-6 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition-colors"
+                    disabled={loading}
+                    className="px-6"
                 >
                     Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                     type="submit"
-                    disabled={loading}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-12 px-10 bg-blue-600 hover:bg-blue-500 border-0 shadow-lg shadow-blue-600/20"
+                    isLoading={loading}
                 >
-                    {loading ? 'Saving...' : customerId ? 'Update Customer' : 'Add Customer'}
-                </button>
+                    <Check size={18} className="mr-2" />
+                    {isEdit ? 'Update Details' : 'Register Customer'}
+                </Button>
             </div>
         </form>
     );

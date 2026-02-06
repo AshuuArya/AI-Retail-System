@@ -58,6 +58,12 @@ export class AppwriteProductRepository implements IProductRepository {
                 additionalFields: JSON.stringify(data.additionalFields || {}),
                 customImageUrl: data.customImageUrl || '',
                 userEditedDescription: data.userEditedDescription || '',
+                lowStockThreshold: data.lowStockThreshold || 10,
+                unit: data.unit || 'piece',
+                brand: data.brand || '',
+                tags: data.tags || [],
+                isActive: data.isActive !== undefined ? data.isActive : true,
+                barcode: data.barcode || '',
             }
         );
 
@@ -65,7 +71,19 @@ export class AppwriteProductRepository implements IProductRepository {
     }
 
     async update(id: string, data: UpdateProductDTO): Promise<Product> {
-        const updateData: any = { ...data };
+        const updateData: any = {};
+        const allowedFields = [
+            'itemId', 'itemName', 'category', 'quantity', 'costPrice', 'sellPrice',
+            'additionalFields', 'aiGeneratedImageUrl', 'aiGeneratedDescription',
+            'customImageUrl', 'userEditedDescription', 'lowStockThreshold',
+            'unit', 'brand', 'tags', 'isActive', 'barcode'
+        ];
+
+        allowedFields.forEach(field => {
+            if ((data as any)[field] !== undefined) {
+                updateData[field] = (data as any)[field];
+            }
+        });
 
         if (data.additionalFields) {
             updateData.additionalFields = JSON.stringify(data.additionalFields);
@@ -89,14 +107,21 @@ export class AppwriteProductRepository implements IProductRepository {
         );
     }
 
-    async search(query: string, sellerId: string): Promise<Product[]> {
+    async search(query: string, sellerId: string, category?: string): Promise<Product[]> {
+        const queries = [Query.equal('sellerId', sellerId)];
+
+        if (query) {
+            queries.push(Query.search('itemName', query));
+        }
+
+        if (category && category !== 'all') {
+            queries.push(Query.equal('category', category));
+        }
+
         const response = await this.db.listDocuments(
             this.databaseId,
             this.collectionId,
-            [
-                Query.equal('sellerId', sellerId),
-                Query.search('itemName', query)
-            ]
+            queries
         );
 
         return response.documents.map(doc => this.mapToProduct(doc));
@@ -128,6 +153,12 @@ export class AppwriteProductRepository implements IProductRepository {
             aiGeneratedDescription: doc.aiGeneratedDescription,
             customImageUrl: doc.customImageUrl,
             userEditedDescription: doc.userEditedDescription || doc.description,
+            lowStockThreshold: doc.lowStockThreshold || 10,
+            unit: doc.unit || 'piece',
+            brand: doc.brand || '',
+            tags: doc.tags || [],
+            isActive: doc.isActive ?? true,
+            barcode: doc.barcode || '',
             createdAt: new Date(doc.$createdAt),
             updatedAt: new Date(doc.$updatedAt),
         };

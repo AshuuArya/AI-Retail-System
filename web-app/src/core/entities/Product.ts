@@ -21,8 +21,14 @@ export interface Product {
     // AI-generated content
     aiGeneratedImageUrl?: string;
     aiGeneratedDescription?: string;
-    customImageUrl?: string; // If user uploads custom image
-    userEditedDescription?: string; // If user edits AI description
+    lowStockThreshold?: number;
+    unit?: string;
+    brand?: string;
+    tags?: string[];
+    isActive?: boolean;
+    barcode?: string;
+    customImageUrl?: string;
+    userEditedDescription?: string;
 
     // Metadata
     createdAt: Date;
@@ -40,6 +46,12 @@ export interface CreateProductDTO {
     additionalFields?: Record<string, any>;
     customImageUrl?: string;
     userEditedDescription?: string;
+    lowStockThreshold?: number;
+    unit?: string;
+    brand?: string;
+    tags?: string[];
+    isActive?: boolean;
+    barcode?: string;
 }
 
 export interface UpdateProductDTO {
@@ -52,8 +64,13 @@ export interface UpdateProductDTO {
     additionalFields?: Record<string, any>;
     aiGeneratedImageUrl?: string;
     aiGeneratedDescription?: string;
-    customImageUrl?: string;
     userEditedDescription?: string;
+    lowStockThreshold?: number;
+    unit?: string;
+    brand?: string;
+    tags?: string[];
+    isActive?: boolean;
+    barcode?: string;
 }
 
 // Helper type for product with calculated fields
