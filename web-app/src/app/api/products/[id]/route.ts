@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { AppwriteProductRepository } from '@/infrastructure/appwrite/AppwriteProductRepository';
-import { GetProductsUseCase } from '@/core/use-cases/GetProductsUseCase';
 import { UpdateProductDTO } from '@/core/entities/Product';
 
 // Initialize dependencies
 const productRepository = new AppwriteProductRepository();
-const getProductsUseCase = new GetProductsUseCase(productRepository);
 
 // GET single product
 export async function GET(
@@ -27,7 +25,7 @@ export async function GET(
     } catch (error: any) {
         console.error('Error fetching product:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch product' },
+            { error: (error as Error).message || 'Failed to fetch product' },
             { status: 500 }
         );
     }
@@ -49,7 +47,7 @@ export async function PUT(
     } catch (error: any) {
         console.error('Error updating product:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to update product' },
+            { error: (error as Error).message || 'Failed to update product' },
             { status: 500 }
         );
     }
@@ -68,7 +66,7 @@ export async function DELETE(
     } catch (error: any) {
         console.error('Error deleting product:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to delete product' },
+            { error: (error as Error).message || 'Failed to delete product' },
             { status: 500 }
         );
     }

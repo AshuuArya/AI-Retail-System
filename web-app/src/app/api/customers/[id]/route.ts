@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { AppwriteCustomerRepository } from '@/infrastructure/appwrite/AppwriteCustomerRepository';
-import { ManageCustomersUseCase } from '@/core/use-cases/ManageCustomersUseCase';
 import { CreateCustomerDTO } from '@/core/repositories/ICustomerRepository';
 
 // Initialize dependencies
 const customerRepository = new AppwriteCustomerRepository();
-const manageCustomersUseCase = new ManageCustomersUseCase(customerRepository);
 
 // GET single customer
 export async function GET(
@@ -27,7 +25,7 @@ export async function GET(
     } catch (error: any) {
         console.error('Error fetching customer:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch customer' },
+            { error: (error as Error).message || 'Failed to fetch customer' },
             { status: 500 }
         );
     }
@@ -49,7 +47,7 @@ export async function PUT(
     } catch (error: any) {
         console.error('Error updating customer:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to update customer' },
+            { error: (error as Error).message || 'Failed to update customer' },
             { status: 500 }
         );
     }
@@ -68,7 +66,7 @@ export async function DELETE(
     } catch (error: any) {
         console.error('Error deleting customer:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to delete customer' },
+            { error: (error as Error).message || 'Failed to delete customer' },
             { status: 500 }
         );
     }
