@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
         const data: CreateSellerDTO & { password: string } = await request.json();
 
         // Validate required fields
-        if (!data.companyName || !data.ownerName || !data.email || !data.gstNumber || !data.password) {
+        if (!data.companyName || !data.ownerName || !data.email || !data.gstNumber || !data.password || !data.address) {
             return NextResponse.json(
-                { message: 'Missing required fields' },
+                { message: 'Missing required fields (Business details or Address)' },
                 { status: 400 }
             );
         }

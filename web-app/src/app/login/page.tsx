@@ -129,15 +129,34 @@ function AuthContent() {
         }
 
         try {
-            const response = await fetch('/api/auth/register', {
+            // Nest the address for the DTO
+            const formattedData = {
+                ...signUpData,
+                address: {
+                    street: signUpData.street,
+                    city: signUpData.city,
+                    state: signUpData.state,
+                    pincode: signUpData.pincode,
+                    country: signUpData.country,
+                }
+            };
+
+            const response = await fetch('/api/sellers/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signUpData),
+                body: JSON.stringify(formattedData),
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Registration failed');
+                // Try to parse error, fallback to status text if it's not JSON (e.g. 404/500 HTML)
+                let errorMsg = 'Registration failed';
+                try {
+                    const error = await response.json();
+                    errorMsg = error.message || error.error || errorMsg;
+                } catch (e) {
+                    errorMsg = `Server error (${response.status}): ${response.statusText}`;
+                }
+                throw new Error(errorMsg);
             }
 
             setShowSuccess(true);
@@ -184,8 +203,8 @@ function AuthContent() {
                         <button
                             onClick={() => setActiveTab('signin')}
                             className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-500 ${activeTab === 'signin'
-                                    ? 'bg-white/5 text-white shadow-xl border border-white/10'
-                                    : 'text-slate-500 hover:text-slate-300'
+                                ? 'bg-white/5 text-white shadow-xl border border-white/10'
+                                : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
                             <LogIn size={16} />
@@ -194,8 +213,8 @@ function AuthContent() {
                         <button
                             onClick={() => setActiveTab('signup')}
                             className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-500 ${activeTab === 'signup'
-                                    ? 'bg-white/5 text-white shadow-xl border border-white/10'
-                                    : 'text-slate-500 hover:text-slate-300'
+                                ? 'bg-white/5 text-white shadow-xl border border-white/10'
+                                : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
                             <UserPlus size={16} />

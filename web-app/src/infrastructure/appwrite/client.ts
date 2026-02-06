@@ -11,9 +11,12 @@ let clientInstance: Client | null = null;
 
 export function getAppwriteClient(): Client {
     if (!clientInstance) {
+        if (!config.appwrite.endpoint || !config.appwrite.projectId) {
+            console.error('CRITICAL: Appwrite configuration missing! Check NEXT_PUBLIC_APPWRITE_ENDPOINT and NEXT_PUBLIC_APPWRITE_PROJECT_ID environment variables.');
+        }
         clientInstance = new Client()
-            .setEndpoint(config.appwrite.endpoint)
-            .setProject(config.appwrite.projectId);
+            .setEndpoint(config.appwrite.endpoint || 'http://localhost/v1')
+            .setProject(config.appwrite.projectId || 'missing');
     }
     return clientInstance;
 }
